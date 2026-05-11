@@ -1,7 +1,0 @@
-<!DOCTYPE html>
-
-<script>
-function myAlert(){
-alert('속앚')
-};
-setInterval(myAlert, 1);
