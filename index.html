@@ -1335,7 +1335,7 @@
               data-checkout-plan="pack"
               data-i18n="btnPlanPack"
             >
-              ₩5,000 · 10 views
+              $4 · 10 views
             </button>
             <button
               type="button"
@@ -1343,7 +1343,7 @@
               data-checkout-plan="monthly"
               data-i18n="btnPlanMonthly"
             >
-              ₩50,000 · Unlimited / month
+              $40 · Unlimited / month
             </button>
           </div>
         </div>
@@ -1403,17 +1403,18 @@
             "Could not start checkout. Set STRIPE_SECRET_KEY on Netlify (and optional STRIPE_PRICE_* overrides).",
           payVerifyError: "Could not verify payment. Try again or use a new checkout link.",
           payNeed:
-            "You need a pass. Choose ₩5,000 (10 views) or ₩50,000 (unlimited while your subscription is active), then tap Result.",
+            "You need a pass. Choose $4 (10 views) or $40 (unlimited while your subscription is active), then tap Result. The amount charged may appear in KRW at checkout.",
           paySuccessPack: "Added 10 views. Remaining: {{n}}.",
           paySuccessMonthly:
             "Unlimited plan is active. Enter three numbers and tap Result.",
-          btnPlanPack: "₩5,000 · 10 views",
-          btnPlanMonthly: "₩50,000 · Unlimited (monthly)",
+          btnPlanPack: "$4 · 10 views",
+          btnPlanMonthly: "$40 · Unlimited (monthly)",
           quotaUnlimited: "Status: unlimited this billing period (subscription).",
           quotaCredits: "Remaining paid views: {{n}}",
           quotaDemo: "Demo · {{n}} views left",
           demoLoading: "Demo checkout…",
-          demoMonthlyOnly: "Demo mode: only the ₩5,000 pack is simulated. Use live site for monthly.",
+          demoMonthlyOnly:
+            "Demo mode: only the $4 (10-view) pack is simulated. Use live site for monthly.",
           payModalTitle: "Choose a pass",
           payModalSubtitle: "Stripe secure checkout — pick a plan below.",
           payModalBack: "← Back to plans",
@@ -1481,16 +1482,16 @@
             "无法开始结账。请在 Netlify 设置 STRIPE_SECRET_KEY（可选 STRIPE_PRICE_*）。",
           payVerifyError: "无法验证支付。请重试或重新结账。",
           payNeed:
-            "需要购买使用权。请在下方选择后，再点击结果。",
+            "需要购买使用权。请选择 ¥26（10 次）或 ¥260（订阅期内不限），然后再点击结果。结账时实际币种以 Stripe 为准。",
           paySuccessPack: "已充值 10 次。剩余：{{n}} 次。",
           paySuccessMonthly: "已开通按月不限次数（订阅）。输入数字后点击结果。",
-          btnPlanPack: "₩5,000 · 10 次",
-          btnPlanMonthly: "₩50,000 · 按月不限（订阅）",
+          btnPlanPack: "¥26 · 10 次",
+          btnPlanMonthly: "¥260 · 按月不限（订阅）",
           quotaUnlimited: "状态：本账单周期内不限次数（订阅）",
           quotaCredits: "剩余次数：{{n}}",
           quotaDemo: "演示 · 剩余 {{n}} 次",
           demoLoading: "演示支付处理中…",
-          demoMonthlyOnly: "演示模式仅模拟 ₩5,000。月付请在正式环境使用。",
+          demoMonthlyOnly: "演示模式仅模拟 ¥26 次数包。月付请在正式环境使用。",
           payModalTitle: "选择套餐",
           payModalSubtitle: "Stripe 安全收银台 — 请在下方选择方案。",
           payModalBack: "← 返回套餐",
