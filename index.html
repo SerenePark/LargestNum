@@ -866,6 +866,11 @@
         margin-top: 0.85rem;
       }
 
+      /* `display:flex` beats the UA default for [hidden]; force hide when closed */
+      .plan-row[hidden] {
+        display: none !important;
+      }
+
       .btn-plan {
         flex: 1;
         min-width: 10rem;
@@ -900,6 +905,10 @@
         font-weight: 700;
         color: #6d28d9;
         min-height: 1.25rem;
+      }
+
+      .quota-bar[hidden] {
+        display: none !important;
       }
 
       @media (prefers-color-scheme: dark) {
