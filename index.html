@@ -1531,22 +1531,35 @@
       const DEMO_FLAG_KEY = "largest-number-demo";
       const DEMO_CREDITS_KEY = "largest-number-demo-credits";
 
-      function isDemo() {
-        return localStorage.getItem(DEMO_FLAG_KEY) === "1";
+      /** `?demo`, `?demo=1`, `?demo=true` → on; `?demo=0` / `?demo=false` → off */
+      function demoQueryMode() {
+        const p = new URLSearchParams(window.location.search);
+        if (!p.has("demo")) return null;
+        const raw = (p.get("demo") ?? "").trim().toLowerCase();
+        if (raw === "" || raw === "1" || raw === "true" || raw === "yes")
+          return "on";
+        if (raw === "0" || raw === "false" || raw === "no") return "off";
+        return "on";
       }
 
       function persistDemoFromQuery() {
+        const mode = demoQueryMode();
+        if (mode == null) return;
         const p = new URLSearchParams(window.location.search);
-        if (p.get("demo") === "1") {
+        p.delete("demo");
+        const qs = p.toString();
+        const path = window.location.pathname + (qs ? "?" + qs : "") + window.location.hash;
+        if (mode === "on") {
           localStorage.setItem(DEMO_FLAG_KEY, "1");
-          p.delete("demo");
-          const qs = p.toString();
-          history.replaceState(
-            {},
-            "",
-            window.location.pathname + (qs ? "?" + qs : "") + window.location.hash
-          );
+        } else {
+          localStorage.removeItem(DEMO_FLAG_KEY);
         }
+        history.replaceState({}, "", path);
+      }
+
+      function isDemo() {
+        persistDemoFromQuery();
+        return localStorage.getItem(DEMO_FLAG_KEY) === "1";
       }
 
       function getDemoCredits() {
@@ -1933,6 +1946,7 @@
       }
 
       async function startCheckoutPlan(plan) {
+        persistDemoFromQuery();
         if (plan === "pack" && isDemo()) {
           await runDemoPackLoading();
           return;
@@ -2209,6 +2223,17 @@
       async function initFromUrl() {
         persistDemoFromQuery();
         const params = new URLSearchParams(window.location.search);
+        if (isDemo()) {
+          if (params.get("payment") === "canceled" || params.get("session_id")) {
+            result.textContent = "";
+            history.replaceState({}, "", window.location.pathname);
+            if (params.get("payment") === "canceled") {
+              openMessagePopup(t("payCanceled"));
+            }
+          }
+          refreshResult();
+          return;
+        }
         if (params.get("payment") === "canceled") {
           result.textContent = "";
           history.replaceState({}, "", window.location.pathname);
