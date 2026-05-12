@@ -853,6 +853,61 @@
         }
       }
 
+      .btn-check:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .plan-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.85rem;
+      }
+
+      .btn-plan {
+        flex: 1;
+        min-width: 10rem;
+        padding: 0.55rem 0.75rem;
+        font: inherit;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        border-radius: 10px;
+        cursor: pointer;
+        border: 2px solid rgba(124, 58, 237, 0.45);
+        background: rgba(255, 255, 255, 0.65);
+        color: #5b21b6;
+        transition: background 0.2s, transform 0.15s;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .btn-plan {
+          background: rgba(30, 27, 50, 0.8);
+          border-color: rgba(167, 139, 250, 0.45);
+          color: #e9d5ff;
+        }
+      }
+
+      .btn-plan:hover {
+        background: rgba(124, 58, 237, 0.12);
+        transform: translateY(-1px);
+      }
+
+      .quota-bar {
+        margin-top: 0.65rem;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: #6d28d9;
+        min-height: 1.25rem;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .quota-bar {
+          color: #c4b5fd;
+        }
+      }
+
       #result {
         margin-top: 1.15rem;
         padding: 1rem 1rem 1.05rem;
@@ -917,6 +972,22 @@
         Check result
       </button>
 
+      <p id="quota-bar" class="quota-bar" hidden aria-live="polite"></p>
+
+      <div id="plan-row" class="plan-row" hidden>
+        <button type="button" class="btn-plan" data-checkout-plan="pack" data-i18n="btnPlanPack">
+          ₩5,000 · 10 views
+        </button>
+        <button
+          type="button"
+          class="btn-plan"
+          data-checkout-plan="monthly"
+          data-i18n="btnPlanMonthly"
+        >
+          ₩50,000 · Unlimited / month
+        </button>
+      </div>
+
       <p id="result" aria-live="polite"></p>
     </main>
 
@@ -971,6 +1042,21 @@
           resultPrefix: "largest number: ",
           popupLabel: "Largest number",
           popupClose: "Got it!",
+          payRedirecting: "Opening secure payment…",
+          payVerifying: "Verifying payment…",
+          payCanceled: "Payment was canceled. Tap Check result to try again.",
+          payCheckoutError:
+            "Could not start checkout. Set STRIPE_SECRET_KEY on Netlify (and optional STRIPE_PRICE_* overrides).",
+          payVerifyError: "Could not verify payment. Try again or use a new checkout link.",
+          payNeed:
+            "You need a pass. Choose ₩5,000 (10 views) or ₩50,000 (unlimited while your subscription is active), then tap Check result.",
+          paySuccessPack: "Added 10 views. Remaining: {{n}}.",
+          paySuccessMonthly:
+            "Unlimited plan is active. Enter three numbers and tap Check result.",
+          btnPlanPack: "₩5,000 · 10 views",
+          btnPlanMonthly: "₩50,000 · Unlimited (monthly)",
+          quotaUnlimited: "Status: unlimited this billing period (subscription).",
+          quotaCredits: "Remaining paid views: {{n}}",
           ariaLang: "Language",
         },
         ko: {
@@ -986,6 +1072,21 @@
           resultPrefix: "가장 큰 수: ",
           popupLabel: "가장 큰 수",
           popupClose: "확인!",
+          payRedirecting: "안전한 결제 페이지로 이동 중…",
+          payVerifying: "결제 확인 중…",
+          payCanceled: "결제가 취소되었습니다. 다시 결과 확인하기를 눌러 주세요.",
+          payCheckoutError:
+            "결제를 시작할 수 없습니다. Netlify에 STRIPE_SECRET_KEY를 설정했는지 확인하세요.",
+          payVerifyError: "결제를 확인할 수 없습니다. 다시 시도하거나 새로 결제해 주세요.",
+          payNeed:
+            "이용권이 필요합니다. ₩5,000(10회) 또는 ₩50,000(월 구독·구독 기간 동안 무제한) 중 하나를 고른 뒤, 다시 결과 확인하기를 눌러 주세요.",
+          paySuccessPack: "10회가 충전되었습니다. 남은 횟수: {{n}}회",
+          paySuccessMonthly:
+            "한 달 무제한(구독)이 적용되었습니다. 세 수를 입력한 뒤 결과 확인하기를 눌러 주세요.",
+          btnPlanPack: "₩5,000 · 10회",
+          btnPlanMonthly: "₩50,000 · 한 달 무제한(구독)",
+          quotaUnlimited: "상태: 이번 결제 주기 동안 무제한(구독)",
+          quotaCredits: "남은 횟수: {{n}}회",
           ariaLang: "언어",
         },
         zh: {
@@ -1001,6 +1102,20 @@
           resultPrefix: "最大的数: ",
           popupLabel: "最大的数",
           popupClose: "知道了",
+          payRedirecting: "正在打开安全支付页面…",
+          payVerifying: "正在验证支付…",
+          payCanceled: "已取消支付。请再次点击查看结果。",
+          payCheckoutError:
+            "无法开始结账。请在 Netlify 设置 STRIPE_SECRET_KEY（可选 STRIPE_PRICE_*）。",
+          payVerifyError: "无法验证支付。请重试或重新结账。",
+          payNeed:
+            "需要购买使用权。请选择 ₩5,000（10 次）或 ₩50,000（订阅期内不限次数），然后再点击查看结果。",
+          paySuccessPack: "已充值 10 次。剩余：{{n}} 次。",
+          paySuccessMonthly: "已开通按月不限次数（订阅）。输入三个数字后点击查看结果。",
+          btnPlanPack: "₩5,000 · 10 次",
+          btnPlanMonthly: "₩50,000 · 按月不限（订阅）",
+          quotaUnlimited: "状态：本账单周期内不限次数（订阅）",
+          quotaCredits: "剩余次数：{{n}}",
           ariaLang: "语言",
         },
       };
@@ -1017,6 +1132,10 @@
       const popupSparkles = document.getElementById("popup-sparkles");
       const langBar = document.querySelector(".lang-bar");
       const langButtons = langBar.querySelectorAll("[data-lang]");
+      const planRow = document.getElementById("plan-row");
+      const quotaBar = document.getElementById("quota-bar");
+
+      const CUSTOMER_KEY = "largest-number-stripe-customer-id";
 
       const LANG_KEY = "largest-number-lang";
       const supported = ["en", "ko", "zh"];
@@ -1202,9 +1321,80 @@
 
       let currentLang = detectInitialLang();
       let needsRecheck = true;
+      let paidReveal = false;
+      let paidLargest = null;
+      let paidSnapshot = null;
+
+      function inputsMatchPaid() {
+        if (!paidSnapshot) return false;
+        return (
+          n1.value.trim() === paidSnapshot.n1 &&
+          n2.value.trim() === paidSnapshot.n2 &&
+          n3.value.trim() === paidSnapshot.n3
+        );
+      }
 
       function t(key) {
         return STR[currentLang][key] ?? STR.en[key];
+      }
+
+      async function refreshQuotaBar() {
+        const cid = localStorage.getItem(CUSTOMER_KEY);
+        if (!cid) {
+          quotaBar.textContent = "";
+          quotaBar.hidden = true;
+          return;
+        }
+        try {
+          const r = await fetch(
+            "/.netlify/functions/quota-status?customer_id=" +
+              encodeURIComponent(cid)
+          );
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error();
+          quotaBar.hidden = false;
+          if (d.unlimited) {
+            quotaBar.textContent = t("quotaUnlimited");
+          } else {
+            quotaBar.textContent = t("quotaCredits").replace(
+              "{{n}}",
+              String(d.creditsRemaining ?? 0)
+            );
+          }
+        } catch {
+          quotaBar.textContent = "";
+          quotaBar.hidden = true;
+        }
+      }
+
+      async function startCheckoutPlan(plan) {
+        const cid = localStorage.getItem(CUSTOMER_KEY);
+        result.textContent = t("payRedirecting");
+        planRow.querySelectorAll(".btn-plan").forEach((b) => {
+          b.disabled = true;
+        });
+        btnCheck.disabled = true;
+        try {
+          const r = await fetch("/.netlify/functions/create-checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              plan,
+              customer: cid || undefined,
+            }),
+          });
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok || !data.url) {
+            throw new Error(data.error || "checkout");
+          }
+          window.location.href = data.url;
+        } catch {
+          result.textContent = t("payCheckoutError");
+          planRow.querySelectorAll(".btn-plan").forEach((b) => {
+            b.disabled = false;
+          });
+          btnCheck.disabled = false;
+        }
       }
 
       function applyStaticStrings() {
@@ -1230,6 +1420,7 @@
         localStorage.setItem(LANG_KEY, lang);
         applyStaticStrings();
         refreshResult();
+        refreshQuotaBar();
       }
 
       function closeResultPopup() {
@@ -1260,39 +1451,91 @@
         popupClose.focus();
       }
 
-      function computeAndShow(options) {
-        const showPopup = options && options.showPopup;
-        const raw = [n1.value, n2.value, n3.value];
-        if (raw.some((s) => s.trim() === "")) {
-          result.textContent = t("resultEmpty");
-          return;
-        }
-        const nums = raw.map((s) => Number(s));
-        if (nums.some((n) => Number.isNaN(n))) {
-          result.textContent = t("resultInvalid");
-          return;
-        }
-        const largest = Math.max(nums[0], nums[1], nums[2]);
-        const valueStr = String(largest);
-        result.textContent = t("resultPrefix") + valueStr;
-        if (showPopup) openResultPopup(valueStr);
-      }
-
       function refreshResult() {
+        if (paidReveal && paidSnapshot && inputsMatchPaid()) {
+          result.textContent = t("resultPrefix") + paidLargest;
+          return;
+        }
         if (needsRecheck) {
           result.textContent = t("resultHint");
-        } else {
-          computeAndShow();
+          return;
         }
+        result.textContent = t("resultHint");
       }
 
       langButtons.forEach((btn) => {
         btn.addEventListener("click", () => setLang(btn.dataset.lang));
       });
 
-      btnCheck.addEventListener("click", () => {
+      btnCheck.addEventListener("click", async () => {
+        const raw = [n1.value, n2.value, n3.value];
+        if (raw.some((s) => s.trim() === "")) {
+          result.textContent = t("resultEmpty");
+          planRow.hidden = true;
+          return;
+        }
+        const nums = raw.map((s) => Number(s));
+        if (nums.some((n) => Number.isNaN(n))) {
+          result.textContent = t("resultInvalid");
+          planRow.hidden = true;
+          return;
+        }
         needsRecheck = false;
-        computeAndShow({ showPopup: true });
+        btnCheck.disabled = true;
+        const cid = localStorage.getItem(CUSTOMER_KEY);
+
+        if (cid) {
+          try {
+            const r = await fetch("/.netlify/functions/consume-result", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                customerId: cid,
+                n1: n1.value,
+                n2: n2.value,
+                n3: n3.value,
+              }),
+            });
+            const data = await r.json().catch(() => ({}));
+            if (r.ok) {
+              planRow.hidden = true;
+              paidReveal = true;
+              paidLargest = String(data.largest);
+              paidSnapshot = {
+                n1: n1.value.trim(),
+                n2: n2.value.trim(),
+                n3: n3.value.trim(),
+              };
+              result.textContent = t("resultPrefix") + paidLargest;
+              openResultPopup(paidLargest);
+              await refreshQuotaBar();
+              btnCheck.disabled = false;
+              return;
+            }
+            if (r.status === 402) {
+              result.textContent = t("payNeed");
+              planRow.hidden = false;
+              needsRecheck = true;
+              btnCheck.disabled = false;
+              return;
+            }
+            throw new Error(data.error || "consume");
+          } catch {
+            result.textContent = t("payCheckoutError");
+            needsRecheck = true;
+          }
+        } else {
+          result.textContent = t("payNeed");
+          planRow.hidden = false;
+          needsRecheck = true;
+        }
+        btnCheck.disabled = false;
+      });
+
+      planRow.querySelectorAll("[data-checkout-plan]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          startCheckoutPlan(btn.getAttribute("data-checkout-plan"));
+        });
       });
 
       popupClose.addEventListener("click", closeResultPopup);
@@ -1304,11 +1547,59 @@
       [n1, n2, n3].forEach((el) =>
         el.addEventListener("input", () => {
           needsRecheck = true;
+          if (paidSnapshot && !inputsMatchPaid()) {
+            paidReveal = false;
+            paidLargest = null;
+            paidSnapshot = null;
+          }
           result.textContent = t("resultHint");
         })
       );
 
-      refreshResult();
+      async function initFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("payment") === "canceled") {
+          result.textContent = t("payCanceled");
+          planRow.hidden = false;
+          history.replaceState({}, "", window.location.pathname);
+          return;
+        }
+        const sid = params.get("session_id");
+        if (!sid) {
+          refreshResult();
+          return;
+        }
+        result.textContent = t("payVerifying");
+        btnCheck.disabled = true;
+        try {
+          const r = await fetch(
+            "/.netlify/functions/verify-session?session_id=" +
+              encodeURIComponent(sid)
+          );
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok) {
+            throw new Error(data.error || "verify");
+          }
+          history.replaceState({}, "", window.location.pathname);
+          localStorage.setItem(CUSTOMER_KEY, data.customerId);
+          planRow.hidden = true;
+          if (data.plan === "pack") {
+            result.textContent = t("paySuccessPack").replace(
+              "{{n}}",
+              String(data.credits ?? "")
+            );
+          } else {
+            result.textContent = t("paySuccessMonthly");
+          }
+          await refreshQuotaBar();
+        } catch {
+          result.textContent = t("payVerifyError");
+          history.replaceState({}, "", window.location.pathname);
+        }
+        btnCheck.disabled = false;
+      }
+
+      initFromUrl().finally(() => refreshQuotaBar());
     </script>
   </body>
 </html>

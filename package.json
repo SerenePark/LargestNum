@@ -1,0 +1,7 @@
+{
+  "name": "find-largest-number",
+  "private": true,
+  "dependencies": {
+    "stripe": "^17.4.0"
+  }
+}
