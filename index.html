@@ -233,6 +233,36 @@
         }
       }
 
+      @keyframes sparkle-firework {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0) rotate(0deg);
+        }
+        22% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1.45) rotate(180deg);
+        }
+        100% {
+          opacity: 0.55;
+          transform: translate(-50%, -50%) scale(0.65) rotate(520deg);
+        }
+      }
+
+      @keyframes payment-dialog-pop {
+        0% {
+          opacity: 0;
+          transform: scale(0.82) rotate(-4deg);
+        }
+        60% {
+          opacity: 1;
+          transform: scale(1.04) rotate(1.5deg);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) rotate(0);
+        }
+      }
+
       @keyframes number-pulse-glow {
         0%,
         100% {
@@ -340,6 +370,15 @@
         animation: spin-slow 8s linear infinite;
       }
 
+      .result-popup__halo-ring--outer {
+        width: min(165vmin, 1100px);
+        height: min(165vmin, 1100px);
+        border-width: 6px;
+        opacity: 0.35;
+        animation: spin-reverse 18s linear infinite;
+        filter: drop-shadow(0 0 24px rgba(250, 204, 21, 0.45));
+      }
+
       .result-popup.is-open .result-popup__scrim {
         animation: popup-backdrop-in 0.35s ease forwards;
       }
@@ -372,18 +411,18 @@
         position: absolute;
         left: 50%;
         top: 42%;
-        width: 180%;
-        height: 180%;
+        width: 200%;
+        height: 200%;
         z-index: -1;
         pointer-events: none;
         background: repeating-conic-gradient(
           from 0deg at 50% 50%,
-          transparent 0deg 6deg,
-          rgba(255, 255, 255, 0.22) 6deg 7deg,
-          transparent 7deg 14deg
+          transparent 0deg 4deg,
+          rgba(255, 255, 255, 0.28) 4deg 5deg,
+          transparent 5deg 10deg
         );
-        opacity: 0.55;
-        animation: burst-spin 12s linear infinite;
+        opacity: 0.62;
+        animation: burst-spin 8s linear infinite;
       }
 
       .result-popup__sparkles {
@@ -403,6 +442,14 @@
         box-shadow: 0 0 14px 4px currentColor;
         transform: translate(-50%, -50%);
         animation: sparkle-float 1.35s ease-in-out infinite;
+        animation-delay: var(--d, 0s);
+      }
+
+      .result-popup__sparkle--bang {
+        width: 12px;
+        height: 12px;
+        box-shadow: 0 0 22px 8px currentColor, 0 0 40px 2px rgba(255, 255, 255, 0.5);
+        animation: sparkle-firework 1.1s ease-out infinite;
         animation-delay: var(--d, 0s);
       }
 
@@ -558,7 +605,8 @@
         }
         .result-popup__burst,
         .result-popup__halo-ring,
-        .result-popup__sparkle {
+        .result-popup__sparkle,
+        .result-popup__sparkle--bang {
           animation: none !important;
         }
         .result-popup.is-open .result-popup__dialog {
@@ -1011,6 +1059,7 @@
       .payment-popup__scrim {
         position: absolute;
         inset: 0;
+        z-index: 0;
         cursor: pointer;
         background: radial-gradient(
             ellipse 100% 80% at 50% 100%,
@@ -1025,9 +1074,88 @@
         backdrop-filter: blur(14px);
       }
 
+      .payment-popup__confetti {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        display: block;
+      }
+
+      .payment-popup__halo {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        display: grid;
+        place-items: center;
+      }
+
+      .payment-popup__halo-ring {
+        position: absolute;
+        margin: auto;
+        inset: 0;
+        border-radius: 50%;
+        border-style: solid;
+        border-width: 4px;
+        border-color: #ec4899 #eab308 #22c55e #06b6d4 #3b82f6 #a855f7 #f97316 #ec4899;
+        opacity: 0.55;
+        filter: drop-shadow(0 0 14px rgba(236, 72, 153, 0.45));
+      }
+
+      .payment-popup__halo-ring:nth-child(1) {
+        width: min(130vmin, 820px);
+        height: min(130vmin, 820px);
+        animation: spin-slow 13s linear infinite;
+      }
+
+      .payment-popup__halo-ring:nth-child(2) {
+        width: min(100vmin, 640px);
+        height: min(100vmin, 640px);
+        border-width: 3px;
+        opacity: 0.42;
+        animation: spin-reverse 10s linear infinite;
+      }
+
+      .payment-popup__halo-ring:nth-child(3) {
+        width: min(72vmin, 480px);
+        height: min(72vmin, 480px);
+        border-width: 2px;
+        opacity: 0.38;
+        animation: spin-slow 7s linear infinite;
+      }
+
+      .payment-popup__celebration-burst {
+        position: absolute;
+        left: 50%;
+        top: 46%;
+        width: 200%;
+        height: 200%;
+        z-index: 1;
+        pointer-events: none;
+        background: repeating-conic-gradient(
+          from 0deg at 50% 50%,
+          transparent 0deg 5deg,
+          rgba(255, 255, 255, 0.18) 5deg 6deg,
+          transparent 6deg 12deg
+        );
+        opacity: 0.5;
+        animation: burst-spin 10s linear infinite;
+      }
+
+      .payment-popup__sparkles {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        overflow: visible;
+      }
+
       .payment-popup__dialog {
         position: relative;
-        z-index: 1;
+        z-index: 2;
         width: min(100%, 28rem);
         max-height: min(92vh, 760px);
         overflow: auto;
@@ -1043,6 +1171,12 @@
         box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.12) inset,
           0 0 60px rgba(124, 58, 237, 0.35),
           0 24px 48px rgba(0, 0, 0, 0.18);
+        transform: scale(0.9);
+        opacity: 0;
+      }
+
+      .payment-popup.is-open .payment-popup__dialog {
+        animation: payment-dialog-pop 0.62s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
       }
 
       @media (prefers-color-scheme: dark) {
@@ -1081,6 +1215,15 @@
       @media (prefers-reduced-motion: reduce) {
         .payment-popup__title {
           animation: none;
+        }
+        .payment-popup.is-open .payment-popup__dialog {
+          animation: none;
+          opacity: 1;
+          transform: none;
+        }
+        .payment-popup__halo-ring,
+        .payment-popup__celebration-burst {
+          animation: none !important;
         }
       }
 
@@ -1280,6 +1423,7 @@
         <span class="result-popup__halo-ring"></span>
         <span class="result-popup__halo-ring"></span>
         <span class="result-popup__halo-ring"></span>
+        <span class="result-popup__halo-ring result-popup__halo-ring--outer"></span>
       </div>
       <div class="result-popup__dialog">
         <div class="result-popup__burst" aria-hidden="true"></div>
@@ -1311,6 +1455,18 @@
       hidden
     >
       <div class="payment-popup__scrim" data-close-payment tabindex="-1"></div>
+      <canvas
+        id="payment-confetti-canvas"
+        class="payment-popup__confetti"
+        aria-hidden="true"
+      ></canvas>
+      <div class="payment-popup__halo" aria-hidden="true">
+        <span class="payment-popup__halo-ring"></span>
+        <span class="payment-popup__halo-ring"></span>
+        <span class="payment-popup__halo-ring"></span>
+      </div>
+      <div class="payment-popup__celebration-burst" aria-hidden="true"></div>
+      <div id="payment-sparkles" class="payment-popup__sparkles" aria-hidden="true"></div>
       <div class="payment-popup__dialog">
         <button
           type="button"
@@ -1323,7 +1479,7 @@
         </button>
         <div id="payment-step-plans">
           <h2 id="payment-popup-title" class="payment-popup__title" data-i18n="payModalTitle">
-            Choose a pass
+            See your result
           </h2>
           <p class="payment-popup__subtitle" data-i18n="payModalSubtitle">
             Secure checkout by Stripe — pick a plan to continue.
@@ -1415,7 +1571,7 @@
           demoLoading: "Demo checkout…",
           demoMonthlyOnly:
             "Demo mode: only the $4 (10-view) pack is simulated. Use live site for monthly.",
-          payModalTitle: "Choose a pass",
+          payModalTitle: "See your result",
           payModalSubtitle: "Stripe secure checkout — pick a plan below.",
           payModalBack: "← Back to plans",
           payModalCloseAria: "Close payment window",
@@ -1454,7 +1610,7 @@
           quotaDemo: "데모 · 남은 {{n}}회",
           demoLoading: "데모 결제 처리 중…",
           demoMonthlyOnly: "데모에서는 ₩5,000만 시뮬레이션됩니다. 월 구독은 실제 배포 사이트에서 이용하세요.",
-          payModalTitle: "이용권 선택",
+          payModalTitle: "결과 보기",
           payModalSubtitle: "Stripe 안전 결제 — 아래에서 요금제를 고르세요.",
           payModalBack: "← 요금제로 돌아가기",
           payModalCloseAria: "결제 창 닫기",
@@ -1492,7 +1648,7 @@
           quotaDemo: "演示 · 剩余 {{n}} 次",
           demoLoading: "演示支付处理中…",
           demoMonthlyOnly: "演示模式仅模拟 ¥26 次数包。月付请在正式环境使用。",
-          payModalTitle: "选择套餐",
+          payModalTitle: "查看结果",
           payModalSubtitle: "Stripe 安全收银台 — 请在下方选择方案。",
           payModalBack: "← 返回套餐",
           payModalCloseAria: "关闭付款窗口",
@@ -1512,6 +1668,10 @@
       const popupClose = document.getElementById("popup-close");
       const confettiCanvas = document.getElementById("confetti-canvas");
       const popupSparkles = document.getElementById("popup-sparkles");
+      const paymentConfettiCanvas = document.getElementById(
+        "payment-confetti-canvas"
+      );
+      const paymentSparkles = document.getElementById("payment-sparkles");
       const langBar = document.querySelector(".lang-bar");
       const langButtons = langBar.querySelectorAll("[data-lang]");
       const paymentPopup = document.getElementById("payment-popup");
@@ -1601,6 +1761,9 @@
       let confettiRaf = null;
       let confettiOnResize = null;
       let confettiDpr = 1;
+      let paymentConfettiRaf = null;
+      let paymentConfettiOnResize = null;
+      let paymentConfettiDpr = 1;
 
       function motionReduced() {
         return matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1624,6 +1787,29 @@
         }
       }
 
+      function stopPaymentConfetti() {
+        if (paymentConfettiRaf) cancelAnimationFrame(paymentConfettiRaf);
+        paymentConfettiRaf = null;
+        if (paymentConfettiOnResize) {
+          window.removeEventListener("resize", paymentConfettiOnResize);
+          paymentConfettiOnResize = null;
+        }
+        if (paymentConfettiCanvas) {
+          const ctx = paymentConfettiCanvas.getContext("2d");
+          if (ctx && paymentConfettiCanvas.width > 0) {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(
+              0,
+              0,
+              paymentConfettiCanvas.width,
+              paymentConfettiCanvas.height
+            );
+          }
+          paymentConfettiCanvas.width = 0;
+          paymentConfettiCanvas.height = 0;
+        }
+      }
+
       function buildPopupSparkles() {
         if (!popupSparkles) return;
         popupSparkles.innerHTML = "";
@@ -1636,15 +1822,46 @@
           "#4ade80",
           "#fb923c",
           "#f87171",
+          "#fff",
         ];
-        for (let i = 0; i < 34; i++) {
+        const n = 58;
+        for (let i = 0; i < n; i++) {
           const s = document.createElement("span");
-          s.className = "result-popup__sparkle";
-          s.style.left = `${5 + Math.random() * 90}%`;
-          s.style.top = `${6 + Math.random() * 82}%`;
+          const bang = Math.random() < 0.38;
+          s.className = bang
+            ? "result-popup__sparkle result-popup__sparkle--bang"
+            : "result-popup__sparkle";
+          s.style.left = `${4 + Math.random() * 92}%`;
+          s.style.top = `${4 + Math.random() * 88}%`;
           s.style.color = colors[i % colors.length];
-          s.style.setProperty("--d", `${(i * 0.055).toFixed(3)}s`);
+          s.style.setProperty("--d", `${(i * 0.038).toFixed(3)}s`);
           popupSparkles.appendChild(s);
+        }
+      }
+
+      function buildPaymentSparkles() {
+        if (!paymentSparkles) return;
+        paymentSparkles.innerHTML = "";
+        if (motionReduced()) return;
+        const colors = [
+          "#f472b6",
+          "#22d3ee",
+          "#facc15",
+          "#a78bfa",
+          "#4ade80",
+          "#fb923c",
+        ];
+        for (let i = 0; i < 40; i++) {
+          const s = document.createElement("span");
+          const bang = Math.random() < 0.35;
+          s.className = bang
+            ? "result-popup__sparkle result-popup__sparkle--bang"
+            : "result-popup__sparkle";
+          s.style.left = `${3 + Math.random() * 94}%`;
+          s.style.top = `${2 + Math.random() * 90}%`;
+          s.style.color = colors[i % colors.length];
+          s.style.setProperty("--d", `${(i * 0.05).toFixed(3)}s`);
+          paymentSparkles.appendChild(s);
         }
       }
 
@@ -1672,19 +1889,20 @@
         function burst(cx, cy, count, spread) {
           const out = [];
           for (let i = 0; i < count; i++) {
-            const a = (Math.PI * 2 * i) / count + Math.random() * 0.75;
-            const speed = spread * (0.3 + Math.random());
+            const a = (Math.PI * 2 * i) / count + Math.random() * 0.85;
+            const speed = spread * (0.35 + Math.random());
             out.push({
               x: cx,
               y: cy,
-              vx: Math.cos(a) * speed + (Math.random() - 0.5) * 5,
-              vy: Math.sin(a) * speed - (7 + Math.random() * 11),
-              w: 5 + Math.random() * 11,
-              h: 3 + Math.random() * 8,
+              vx: Math.cos(a) * speed + (Math.random() - 0.5) * 6,
+              vy: Math.sin(a) * speed - (8 + Math.random() * 13),
+              w: 5 + Math.random() * 13,
+              h: 3 + Math.random() * 9,
               rot: Math.random() * Math.PI * 2,
-              vr: (Math.random() - 0.5) * 0.55,
-              ay: 0.18 + Math.random() * 0.14,
-              drag: 0.986,
+              vr: (Math.random() - 0.5) * 0.62,
+              ay: 0.17 + Math.random() * 0.15,
+              drag: 0.985,
+              star: Math.random() < 0.16,
               color:
                 CONFETTI_COLORS[
                   (Math.random() * CONFETTI_COLORS.length) | 0
@@ -1697,28 +1915,59 @@
         const w0 = window.innerWidth;
         const h0 = window.innerHeight;
         const particles = [
-          ...burst(w0 / 2, h0 * 0.4, 130, 18),
-          ...burst(w0 * 0.15, h0 * 0.5, 60, 13),
-          ...burst(w0 * 0.85, h0 * 0.5, 60, 13),
+          ...burst(w0 / 2, h0 * 0.36, 200, 22),
+          ...burst(w0 * 0.11, h0 * 0.46, 100, 16),
+          ...burst(w0 * 0.89, h0 * 0.46, 100, 16),
+          ...burst(w0 * 0.5, h0 * 0.78, 120, 15),
         ];
-        for (let i = 0; i < 95; i++) {
+        for (let b = 0; b < 14; b++) {
+          particles.push(
+            ...burst(
+              w0 * (0.08 + Math.random() * 0.84),
+              h0 * (0.1 + Math.random() * 0.52),
+              42 + ((Math.random() * 38) | 0),
+              9 + Math.random() * 13
+            )
+          );
+        }
+        for (let i = 0; i < 165; i++) {
           particles.push({
             x: Math.random() * w0,
-            y: -40 - Math.random() * h0 * 0.5,
-            vx: (Math.random() - 0.5) * 4.5,
-            vy: 2.2 + Math.random() * 7.5,
-            w: 4 + Math.random() * 9,
-            h: 2.5 + Math.random() * 7,
+            y: -50 - Math.random() * h0 * 0.55,
+            vx: (Math.random() - 0.5) * 5.5,
+            vy: 2.5 + Math.random() * 8.5,
+            w: 4 + Math.random() * 11,
+            h: 2.5 + Math.random() * 8,
             rot: Math.random() * Math.PI * 2,
-            vr: (Math.random() - 0.5) * 0.28,
-            ay: 0.09 + Math.random() * 0.11,
-            drag: 0.995,
+            vr: (Math.random() - 0.5) * 0.32,
+            ay: 0.085 + Math.random() * 0.12,
+            drag: 0.994,
+            star: Math.random() < 0.08,
             color:
               CONFETTI_COLORS[(Math.random() * CONFETTI_COLORS.length) | 0],
           });
         }
 
         let frames = 0;
+
+        function drawParticle(p) {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.shadowBlur = 10 + Math.min(p.w, 14) * 0.45;
+          ctx.shadowColor = p.color;
+          if (p.star) {
+            const r = Math.max(p.w, p.h) * 0.55;
+            for (let k = 0; k < 4; k++) {
+              ctx.rotate(Math.PI / 4);
+              ctx.fillRect(-2, -r, 4, r * 2);
+            }
+          } else {
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          }
+          ctx.restore();
+        }
 
         function tick() {
           frames += 1;
@@ -1735,25 +1984,155 @@
             p.y += p.vy;
             p.rot += p.vr;
             if (
-              p.y > -80 &&
+              p.y > -100 &&
+              p.y < H + 120 &&
+              p.x > -120 &&
+              p.x < W + 120
+            ) {
+              alive = true;
+            }
+            drawParticle(p);
+          }
+          if (alive && frames < 1150) {
+            confettiRaf = requestAnimationFrame(tick);
+          }
+        }
+        confettiRaf = requestAnimationFrame(tick);
+      }
+
+      function startPaymentConfetti() {
+        stopPaymentConfetti();
+        if (!paymentConfettiCanvas || motionReduced()) return;
+
+        paymentConfettiDpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        function syncSize() {
+          const w = window.innerWidth;
+          const h = window.innerHeight;
+          paymentConfettiCanvas.width = Math.floor(w * paymentConfettiDpr);
+          paymentConfettiCanvas.height = Math.floor(h * paymentConfettiDpr);
+          paymentConfettiCanvas.style.width = `${w}px`;
+          paymentConfettiCanvas.style.height = `${h}px`;
+        }
+        syncSize();
+        paymentConfettiOnResize = syncSize;
+        window.addEventListener("resize", paymentConfettiOnResize);
+
+        const ctx = paymentConfettiCanvas.getContext("2d");
+        if (!ctx) return;
+
+        function burst(cx, cy, count, spread) {
+          const out = [];
+          for (let i = 0; i < count; i++) {
+            const a = (Math.PI * 2 * i) / count + Math.random() * 0.8;
+            const speed = spread * (0.32 + Math.random());
+            out.push({
+              x: cx,
+              y: cy,
+              vx: Math.cos(a) * speed + (Math.random() - 0.5) * 5,
+              vy: Math.sin(a) * speed - (6 + Math.random() * 10),
+              w: 4 + Math.random() * 10,
+              h: 2.5 + Math.random() * 7,
+              rot: Math.random() * Math.PI * 2,
+              vr: (Math.random() - 0.5) * 0.5,
+              ay: 0.16 + Math.random() * 0.12,
+              drag: 0.986,
+              star: Math.random() < 0.12,
+              color:
+                CONFETTI_COLORS[
+                  (Math.random() * CONFETTI_COLORS.length) | 0
+                ],
+            });
+          }
+          return out;
+        }
+
+        const w0 = window.innerWidth;
+        const h0 = window.innerHeight;
+        const particles = [
+          ...burst(w0 / 2, h0 * 0.4, 130, 18),
+          ...burst(w0 * 0.14, h0 * 0.5, 62, 12),
+          ...burst(w0 * 0.86, h0 * 0.5, 62, 12),
+          ...burst(w0 * 0.5, h0 * 0.74, 85, 12),
+        ];
+        for (let b = 0; b < 8; b++) {
+          particles.push(
+            ...burst(
+              w0 * (0.12 + Math.random() * 0.76),
+              h0 * (0.14 + Math.random() * 0.48),
+              32 + ((Math.random() * 28) | 0),
+              8 + Math.random() * 10
+            )
+          );
+        }
+        for (let i = 0; i < 100; i++) {
+          particles.push({
+            x: Math.random() * w0,
+            y: -35 - Math.random() * h0 * 0.45,
+            vx: (Math.random() - 0.5) * 4,
+            vy: 2 + Math.random() * 6.5,
+            w: 3.5 + Math.random() * 8,
+            h: 2 + Math.random() * 6,
+            rot: Math.random() * Math.PI * 2,
+            vr: (Math.random() - 0.5) * 0.26,
+            ay: 0.08 + Math.random() * 0.1,
+            drag: 0.995,
+            star: Math.random() < 0.06,
+            color:
+              CONFETTI_COLORS[(Math.random() * CONFETTI_COLORS.length) | 0],
+          });
+        }
+
+        let frames = 0;
+
+        function drawParticle(p) {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.shadowBlur = 8 + Math.min(p.w, 12) * 0.4;
+          ctx.shadowColor = p.color;
+          if (p.star) {
+            const r = Math.max(p.w, p.h) * 0.5;
+            for (let k = 0; k < 4; k++) {
+              ctx.rotate(Math.PI / 4);
+              ctx.fillRect(-1.5, -r, 3, r * 2);
+            }
+          } else {
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          }
+          ctx.restore();
+        }
+
+        function tick() {
+          frames += 1;
+          const W = window.innerWidth;
+          const H = window.innerHeight;
+          ctx.setTransform(paymentConfettiDpr, 0, 0, paymentConfettiDpr, 0, 0);
+          ctx.clearRect(0, 0, W, H);
+          let alive = false;
+          for (const p of particles) {
+            p.vy += p.ay;
+            p.vx *= p.drag;
+            p.vy *= p.drag;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.rot += p.vr;
+            if (
+              p.y > -90 &&
               p.y < H + 100 &&
               p.x > -100 &&
               p.x < W + 100
             ) {
               alive = true;
             }
-            ctx.save();
-            ctx.translate(p.x, p.y);
-            ctx.rotate(p.rot);
-            ctx.fillStyle = p.color;
-            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-            ctx.restore();
+            drawParticle(p);
           }
-          if (alive && frames < 800) {
-            confettiRaf = requestAnimationFrame(tick);
+          if (alive && frames < 950) {
+            paymentConfettiRaf = requestAnimationFrame(tick);
           }
         }
-        confettiRaf = requestAnimationFrame(tick);
+        paymentConfettiRaf = requestAnimationFrame(tick);
       }
 
       function detectInitialLang() {
@@ -1830,6 +2209,8 @@
       }
 
       function closePaymentPopup() {
+        stopPaymentConfetti();
+        if (paymentSparkles) paymentSparkles.innerHTML = "";
         destroyEmbeddedCheckout().finally(() => {
           resetPaymentPlanStep();
           paymentPopup.classList.remove("is-open");
@@ -1855,7 +2236,11 @@
         destroyEmbeddedCheckout().finally(() => {
           paymentPopup.removeAttribute("hidden");
           paymentPopup.setAttribute("aria-hidden", "false");
-          requestAnimationFrame(() => paymentPopup.classList.add("is-open"));
+          requestAnimationFrame(() => {
+            paymentPopup.classList.add("is-open");
+            buildPaymentSparkles();
+            startPaymentConfetti();
+          });
           document.body.style.overflow = "hidden";
           document.addEventListener("keydown", onPaymentEscape);
           paymentPopup.querySelector(".btn-plan-embed")?.focus();
@@ -1925,6 +2310,8 @@
         paymentPopup.querySelectorAll(".btn-plan-embed").forEach((b) => {
           b.disabled = false;
         });
+        stopPaymentConfetti();
+        if (paymentSparkles) paymentSparkles.innerHTML = "";
         paymentPopup.classList.remove("is-open");
         paymentPopup.setAttribute("aria-hidden", "true");
         paymentPopup.setAttribute("hidden", "");
