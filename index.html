@@ -1662,6 +1662,7 @@
       const n2 = document.getElementById("n2");
       const n3 = document.getElementById("n3");
       const btnCheck = document.getElementById("btn-check");
+      const quotaBar = document.getElementById("quota-bar");
       const result = document.getElementById("result");
       const resultPopup = document.getElementById("result-popup");
       const popupNumber = document.getElementById("popup-number");
@@ -2241,6 +2242,7 @@
       }
 
       async function refreshQuotaBar() {
+        if (!quotaBar) return;
         persistDemoFromQuery();
         if (isDemo()) {
           quotaBar.hidden = false;
