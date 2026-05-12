@@ -1491,7 +1491,7 @@
               data-checkout-plan="pack"
               data-i18n="btnPlanPack"
             >
-              $4 · 10 views
+              $4 · 10 views — Pay
             </button>
             <button
               type="button"
@@ -1564,11 +1564,11 @@
           paySuccessPack: "Added 10 views. Remaining: {{n}}.",
           paySuccessMonthly:
             "Unlimited plan is active. Enter three numbers and tap Result.",
-          btnPlanPack: "$4 · 10 views",
+          btnPlanPack: "$4 · 10 views — Pay",
           btnPlanMonthly: "$40 · Unlimited (monthly)",
           quotaUnlimited: "Status: unlimited this billing period (subscription).",
           quotaCredits: "Remaining paid views: {{n}}",
-          quotaDemoMode: "Demo — each Result opens a checkout preview",
+          quotaDemoMode: "Demo: in the window, tap the pack plan, then ~1s processing → result",
           demoMonthlyOnly:
             "Demo mode: only the $4 (10-view) pack is simulated. Use live site for monthly.",
           payModalTitle: "See your result",
@@ -1604,11 +1604,11 @@
           paySuccessPack: "10회가 충전되었습니다. 남은 횟수: {{n}}회",
           paySuccessMonthly:
             "한 달 무제한(구독)이 적용되었습니다. 숫자를 입력한 뒤 결과를 눌러 주세요.",
-          btnPlanPack: "₩5,000 · 10회",
+          btnPlanPack: "₩5,000 · 10회 결제하기",
           btnPlanMonthly: "₩50,000 · 한 달 무제한(구독)",
           quotaUnlimited: "상태: 이번 결제 주기 동안 무제한(구독)",
           quotaCredits: "남은 횟수: {{n}}회",
-          quotaDemoMode: "데모 — 결과를 누를 때마다 결제 미리보기",
+          quotaDemoMode: "데모: 결제 창에서 10회 패키지(결제) 버튼을 누르면 1초 처리 후 결과가 뜹니다",
           demoMonthlyOnly: "데모에서는 ₩5,000만 시뮬레이션됩니다. 월 구독은 실제 배포 사이트에서 이용하세요.",
           payModalTitle: "결과 보기",
           payModalSubtitle: "Stripe 안전 결제 — 아래에서 요금제를 고르세요.",
@@ -1642,11 +1642,11 @@
             "需要购买使用权。请选择 ¥26（10 次）或 ¥260（订阅期内不限），然后再点击结果。结账时实际币种以 Stripe 为准。",
           paySuccessPack: "已充值 10 次。剩余：{{n}} 次。",
           paySuccessMonthly: "已开通按月不限次数（订阅）。输入数字后点击结果。",
-          btnPlanPack: "¥26 · 10 次",
+          btnPlanPack: "¥26 · 10 次 — 支付",
           btnPlanMonthly: "¥260 · 按月不限（订阅）",
           quotaUnlimited: "状态：本账单周期内不限次数（订阅）",
           quotaCredits: "剩余次数：{{n}}",
-          quotaDemoMode: "演示 — 每次点「结果」预览结账流程",
+          quotaDemoMode: "演示：在窗口里点次数包按钮，约 1 秒处理后弹出结果",
           demoMonthlyOnly: "演示模式仅模拟 ¥26 次数包。月付请在正式环境使用。",
           payModalTitle: "查看结果",
           payModalSubtitle: "Stripe 安全收银台 — 请在下方选择方案。",
@@ -1687,7 +1687,6 @@
       const CUSTOMER_KEY = "largest-number-stripe-customer-id";
 
       let embeddedCheckoutInstance = null;
-      let demoCheckoutBusy = false;
 
       const DEMO_FLAG_KEY = "largest-number-demo";
 
@@ -2345,7 +2344,6 @@
       async function startCheckoutPlan(plan) {
         persistDemoFromQuery();
         if (plan === "pack" && isDemo()) {
-          if (demoCheckoutBusy) return;
           await runDemoPackLoading();
           return;
         }
@@ -2492,22 +2490,7 @@
         needsRecheck = false;
         persistDemoFromQuery();
         if (isDemo()) {
-          demoCheckoutBusy = true;
-          btnCheck.disabled = true;
-          try {
-            await openPaymentPlanModal();
-            await new Promise((r) => setTimeout(r, 220));
-            if (
-              !paymentPopup.classList.contains("is-open") ||
-              messagePopup.classList.contains("is-open")
-            ) {
-              return;
-            }
-            await runDemoPackLoading();
-          } finally {
-            demoCheckoutBusy = false;
-            btnCheck.disabled = false;
-          }
+          openPaymentPlanModal();
           return;
         }
 
