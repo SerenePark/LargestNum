@@ -1568,7 +1568,7 @@
           btnPlanMonthly: "$40 · Unlimited (monthly)",
           quotaUnlimited: "Status: unlimited this billing period (subscription).",
           quotaCredits: "Remaining paid views: {{n}}",
-          quotaDemo: "Demo · {{n}} views left",
+          quotaDemoMode: "Demo — each Result opens a checkout preview",
           demoMonthlyOnly:
             "Demo mode: only the $4 (10-view) pack is simulated. Use live site for monthly.",
           payModalTitle: "See your result",
@@ -1608,7 +1608,7 @@
           btnPlanMonthly: "₩50,000 · 한 달 무제한(구독)",
           quotaUnlimited: "상태: 이번 결제 주기 동안 무제한(구독)",
           quotaCredits: "남은 횟수: {{n}}회",
-          quotaDemo: "데모 · 남은 {{n}}회",
+          quotaDemoMode: "데모 — 결과를 누를 때마다 결제 미리보기",
           demoMonthlyOnly: "데모에서는 ₩5,000만 시뮬레이션됩니다. 월 구독은 실제 배포 사이트에서 이용하세요.",
           payModalTitle: "결과 보기",
           payModalSubtitle: "Stripe 안전 결제 — 아래에서 요금제를 고르세요.",
@@ -1646,7 +1646,7 @@
           btnPlanMonthly: "¥260 · 按月不限（订阅）",
           quotaUnlimited: "状态：本账单周期内不限次数（订阅）",
           quotaCredits: "剩余次数：{{n}}",
-          quotaDemo: "演示 · 剩余 {{n}} 次",
+          quotaDemoMode: "演示 — 每次点「结果」预览结账流程",
           demoMonthlyOnly: "演示模式仅模拟 ¥26 次数包。月付请在正式环境使用。",
           payModalTitle: "查看结果",
           payModalSubtitle: "Stripe 安全收银台 — 请在下方选择方案。",
@@ -1687,9 +1687,9 @@
       const CUSTOMER_KEY = "largest-number-stripe-customer-id";
 
       let embeddedCheckoutInstance = null;
+      let demoCheckoutBusy = false;
 
       const DEMO_FLAG_KEY = "largest-number-demo";
-      const DEMO_CREDITS_KEY = "largest-number-demo-credits";
 
       /** `?demo`, `?demo=1`, `?demo=true` → on; `?demo=0` / `?demo=false` → off */
       function demoQueryMode() {
@@ -1720,15 +1720,6 @@
       function isDemo() {
         persistDemoFromQuery();
         return localStorage.getItem(DEMO_FLAG_KEY) === "1";
-      }
-
-      function getDemoCredits() {
-        const v = parseInt(localStorage.getItem(DEMO_CREDITS_KEY) || "0", 10);
-        return Number.isNaN(v) ? 0 : Math.max(0, v);
-      }
-
-      function setDemoCredits(n) {
-        localStorage.setItem(DEMO_CREDITS_KEY, String(Math.max(0, n)));
       }
 
       const LANG_KEY = "largest-number-lang";
@@ -2232,32 +2223,29 @@
       }
 
       function openPaymentPlanModal() {
-        resetPaymentPlanStep();
-        destroyEmbeddedCheckout().finally(() => {
-          paymentPopup.removeAttribute("hidden");
-          paymentPopup.setAttribute("aria-hidden", "false");
-          requestAnimationFrame(() => {
-            paymentPopup.classList.add("is-open");
-            buildPaymentSparkles();
-            startPaymentConfetti();
+        return new Promise((resolve) => {
+          resetPaymentPlanStep();
+          destroyEmbeddedCheckout().finally(() => {
+            paymentPopup.removeAttribute("hidden");
+            paymentPopup.setAttribute("aria-hidden", "false");
+            requestAnimationFrame(() => {
+              paymentPopup.classList.add("is-open");
+              buildPaymentSparkles();
+              startPaymentConfetti();
+            });
+            document.body.style.overflow = "hidden";
+            document.addEventListener("keydown", onPaymentEscape);
+            paymentPopup.querySelector(".btn-plan-embed")?.focus();
+            resolve();
           });
-          document.body.style.overflow = "hidden";
-          document.addEventListener("keydown", onPaymentEscape);
-          paymentPopup.querySelector(".btn-plan-embed")?.focus();
         });
       }
 
       async function refreshQuotaBar() {
         persistDemoFromQuery();
         if (isDemo()) {
-          const c = getDemoCredits();
-          if (c > 0) {
-            quotaBar.hidden = false;
-            quotaBar.textContent = t("quotaDemo").replace("{{n}}", String(c));
-          } else {
-            quotaBar.textContent = "";
-            quotaBar.hidden = true;
-          }
+          quotaBar.hidden = false;
+          quotaBar.textContent = t("quotaDemoMode");
           return;
         }
         const cid = localStorage.getItem(CUSTOMER_KEY);
@@ -2327,11 +2315,9 @@
 
         if (snapBad) {
           openMessagePopup(t("resultInvalid"));
-          btnCheck.disabled = false;
           return;
         }
 
-        setDemoCredits(getDemoCredits() + 10);
         const largest = String(Math.max(snapNums[0], snapNums[1], snapNums[2]));
         paidReveal = true;
         paidLargest = largest;
@@ -2342,10 +2328,16 @@
         };
         result.textContent = "";
         await refreshQuotaBar();
-        requestAnimationFrame(() => {
+        await new Promise((resolve) => {
           requestAnimationFrame(() => {
-            openResultPopup(largest);
-            btnCheck.disabled = false;
+            requestAnimationFrame(() => {
+              try {
+                openResultPopup(largest);
+              } catch (e) {
+                console.error(e);
+              }
+              resolve();
+            });
           });
         });
       }
@@ -2353,6 +2345,7 @@
       async function startCheckoutPlan(plan) {
         persistDemoFromQuery();
         if (plan === "pack" && isDemo()) {
+          if (demoCheckoutBusy) return;
           await runDemoPackLoading();
           return;
         }
@@ -2499,26 +2492,22 @@
         needsRecheck = false;
         persistDemoFromQuery();
         if (isDemo()) {
+          demoCheckoutBusy = true;
           btnCheck.disabled = true;
-          const credits = getDemoCredits();
-          if (credits > 0) {
-            const largest = String(Math.max(nums[0], nums[1], nums[2]));
-            setDemoCredits(credits - 1);
-            paidReveal = true;
-            paidLargest = largest;
-            paidSnapshot = {
-              n1: n1.value.trim(),
-              n2: n2.value.trim(),
-              n3: n3.value.trim(),
-            };
-            result.textContent = "";
-            await refreshQuotaBar();
-            openResultPopup(largest);
+          try {
+            await openPaymentPlanModal();
+            await new Promise((r) => setTimeout(r, 220));
+            if (
+              !paymentPopup.classList.contains("is-open") ||
+              messagePopup.classList.contains("is-open")
+            ) {
+              return;
+            }
+            await runDemoPackLoading();
+          } finally {
+            demoCheckoutBusy = false;
             btnCheck.disabled = false;
-            return;
           }
-          btnCheck.disabled = false;
-          openPaymentPlanModal();
           return;
         }
 
