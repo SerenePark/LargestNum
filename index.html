@@ -1160,6 +1160,51 @@
         }
       }
 
+      @keyframes demo-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .demo-loading {
+        min-height: 220px;
+        display: grid;
+        place-items: center;
+        gap: 1rem;
+        padding: 1.5rem 1rem;
+      }
+
+      .demo-loading__rainbow {
+        width: 4.5rem;
+        height: 4.5rem;
+        border-radius: 50%;
+        border: 5px solid transparent;
+        border-top-color: #ec4899;
+        border-right-color: #eab308;
+        border-bottom-color: #22c55e;
+        border-left-color: #3b82f6;
+        animation: demo-spin 0.85s linear infinite;
+        box-shadow: 0 0 28px rgba(124, 58, 237, 0.45);
+      }
+
+      .demo-loading__label {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #7c3aed, #db2777, #0891b2);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-align: center;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .demo-loading__rainbow {
+          animation: none;
+          border-color: #a78bfa;
+        }
+      }
+
       .payment-popup__x {
         position: absolute;
         top: 0.55rem;
@@ -1366,6 +1411,9 @@
           btnPlanMonthly: "₩50,000 · Unlimited (monthly)",
           quotaUnlimited: "Status: unlimited this billing period (subscription).",
           quotaCredits: "Remaining paid views: {{n}}",
+          quotaDemo: "Demo · {{n}} views left",
+          demoLoading: "Demo checkout…",
+          demoMonthlyOnly: "Demo mode: only the ₩5,000 pack is simulated. Use live site for monthly.",
           payModalTitle: "Choose a pass",
           payModalSubtitle: "Stripe secure checkout — pick a plan below.",
           payModalBack: "← Back to plans",
@@ -1402,6 +1450,9 @@
           btnPlanMonthly: "₩50,000 · 한 달 무제한(구독)",
           quotaUnlimited: "상태: 이번 결제 주기 동안 무제한(구독)",
           quotaCredits: "남은 횟수: {{n}}회",
+          quotaDemo: "데모 · 남은 {{n}}회",
+          demoLoading: "데모 결제 처리 중…",
+          demoMonthlyOnly: "데모에서는 ₩5,000만 시뮬레이션됩니다. 월 구독은 실제 배포 사이트에서 이용하세요.",
           payModalTitle: "이용권 선택",
           payModalSubtitle: "Stripe 안전 결제 — 아래에서 요금제를 고르세요.",
           payModalBack: "← 요금제로 돌아가기",
@@ -1437,6 +1488,9 @@
           btnPlanMonthly: "₩50,000 · 按月不限（订阅）",
           quotaUnlimited: "状态：本账单周期内不限次数（订阅）",
           quotaCredits: "剩余次数：{{n}}",
+          quotaDemo: "演示 · 剩余 {{n}} 次",
+          demoLoading: "演示支付处理中…",
+          demoMonthlyOnly: "演示模式仅模拟 ₩5,000。月付请在正式环境使用。",
           payModalTitle: "选择套餐",
           payModalSubtitle: "Stripe 安全收银台 — 请在下方选择方案。",
           payModalBack: "← 返回套餐",
@@ -1472,6 +1526,36 @@
       const CUSTOMER_KEY = "largest-number-stripe-customer-id";
 
       let embeddedCheckoutInstance = null;
+
+      const DEMO_FLAG_KEY = "largest-number-demo";
+      const DEMO_CREDITS_KEY = "largest-number-demo-credits";
+
+      function isDemo() {
+        return localStorage.getItem(DEMO_FLAG_KEY) === "1";
+      }
+
+      function persistDemoFromQuery() {
+        const p = new URLSearchParams(window.location.search);
+        if (p.get("demo") === "1") {
+          localStorage.setItem(DEMO_FLAG_KEY, "1");
+          p.delete("demo");
+          const qs = p.toString();
+          history.replaceState(
+            {},
+            "",
+            window.location.pathname + (qs ? "?" + qs : "") + window.location.hash
+          );
+        }
+      }
+
+      function getDemoCredits() {
+        const v = parseInt(localStorage.getItem(DEMO_CREDITS_KEY) || "0", 10);
+        return Number.isNaN(v) ? 0 : Math.max(0, v);
+      }
+
+      function setDemoCredits(n) {
+        localStorage.setItem(DEMO_CREDITS_KEY, String(Math.max(0, n)));
+      }
 
       const LANG_KEY = "largest-number-lang";
       const supported = ["en", "ko", "zh"];
@@ -1765,6 +1849,18 @@
       }
 
       async function refreshQuotaBar() {
+        persistDemoFromQuery();
+        if (isDemo()) {
+          const c = getDemoCredits();
+          if (c > 0) {
+            quotaBar.hidden = false;
+            quotaBar.textContent = t("quotaDemo").replace("{{n}}", String(c));
+          } else {
+            quotaBar.textContent = "";
+            quotaBar.hidden = true;
+          }
+          return;
+        }
         const cid = localStorage.getItem(CUSTOMER_KEY);
         if (!cid) {
           quotaBar.textContent = "";
@@ -1793,7 +1889,57 @@
         }
       }
 
+      async function runDemoPackLoading() {
+        paymentPopup.querySelectorAll(".btn-plan-embed").forEach((b) => {
+          b.disabled = true;
+        });
+        paymentStepPlans.hidden = true;
+        paymentStepEmbed.hidden = false;
+        const statusEl = document.getElementById("payment-embed-status");
+        statusEl.hidden = true;
+        embeddedCheckoutHost.innerHTML =
+          "<div class=\"demo-loading\" role=\"status\"><div class=\"demo-loading__rainbow\" aria-hidden=\"true\"></div><p class=\"demo-loading__label\"></p></div>";
+        embeddedCheckoutHost.querySelector(".demo-loading__label").textContent =
+          t("demoLoading");
+        await new Promise((r) => setTimeout(r, 1000));
+        setDemoCredits(getDemoCredits() + 10);
+        embeddedCheckoutHost.innerHTML = "";
+        statusEl.hidden = false;
+        statusEl.textContent = t("payLoadingCheckout");
+        paymentStepEmbed.hidden = true;
+        paymentStepPlans.hidden = false;
+        paymentPopup.querySelectorAll(".btn-plan-embed").forEach((b) => {
+          b.disabled = false;
+        });
+        paymentPopup.classList.remove("is-open");
+        paymentPopup.setAttribute("aria-hidden", "true");
+        paymentPopup.setAttribute("hidden", "");
+        document.removeEventListener("keydown", onPaymentEscape);
+
+        const nv = [Number(n1.value), Number(n2.value), Number(n3.value)];
+        const largest = String(Math.max(nv[0], nv[1], nv[2]));
+        paidReveal = true;
+        paidLargest = largest;
+        paidSnapshot = {
+          n1: n1.value.trim(),
+          n2: n2.value.trim(),
+          n3: n3.value.trim(),
+        };
+        result.textContent = "";
+        await refreshQuotaBar();
+        openResultPopup(largest);
+        btnCheck.disabled = false;
+      }
+
       async function startCheckoutPlan(plan) {
+        if (plan === "pack" && isDemo()) {
+          await runDemoPackLoading();
+          return;
+        }
+        if (plan === "monthly" && isDemo()) {
+          openMessagePopup(t("demoMonthlyOnly"));
+          return;
+        }
         paymentStepPlans.hidden = true;
         paymentStepEmbed.hidden = false;
         const statusEl = document.getElementById("payment-embed-status");
@@ -1840,6 +1986,7 @@
       }
 
       function applyStaticStrings() {
+        persistDemoFromQuery();
         document.documentElement.lang =
           currentLang === "ko" ? "ko" : currentLang === "zh" ? "zh-Hans" : "en";
         document.title = t("pageTitle");
@@ -1930,6 +2077,31 @@
           return;
         }
         needsRecheck = false;
+        persistDemoFromQuery();
+        if (isDemo()) {
+          btnCheck.disabled = true;
+          const credits = getDemoCredits();
+          if (credits > 0) {
+            const largest = String(Math.max(nums[0], nums[1], nums[2]));
+            setDemoCredits(credits - 1);
+            paidReveal = true;
+            paidLargest = largest;
+            paidSnapshot = {
+              n1: n1.value.trim(),
+              n2: n2.value.trim(),
+              n3: n3.value.trim(),
+            };
+            result.textContent = "";
+            await refreshQuotaBar();
+            openResultPopup(largest);
+            btnCheck.disabled = false;
+            return;
+          }
+          btnCheck.disabled = false;
+          openPaymentPlanModal();
+          return;
+        }
+
         btnCheck.disabled = true;
         const cid = localStorage.getItem(CUSTOMER_KEY);
 
@@ -2034,6 +2206,7 @@
       );
 
       async function initFromUrl() {
+        persistDemoFromQuery();
         const params = new URLSearchParams(window.location.search);
         if (params.get("payment") === "canceled") {
           result.textContent = "";
