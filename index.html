@@ -1476,6 +1476,18 @@
       const LANG_KEY = "largest-number-lang";
       const supported = ["en", "ko", "zh"];
 
+      function loadStripeJs() {
+        return new Promise((resolve, reject) => {
+          if (window.Stripe) return resolve();
+          const s = document.createElement("script");
+          s.src = "https://js.stripe.com/v3/";
+          s.async = true;
+          s.onload = () => resolve();
+          s.onerror = () => reject(new Error("stripe-js"));
+          document.head.appendChild(s);
+        });
+      }
+
       const CONFETTI_COLORS = [
         "#ef4444",
         "#f97316",
@@ -1674,6 +1686,84 @@
         return STR[currentLang][key] ?? STR.en[key];
       }
 
+      function closeMessagePopup() {
+        messagePopup.classList.remove("is-open");
+        messagePopup.setAttribute("aria-hidden", "true");
+        messagePopup.setAttribute("hidden", "");
+        if (
+          !paymentPopup.classList.contains("is-open") &&
+          !resultPopup.classList.contains("is-open")
+        ) {
+          document.body.style.overflow = "";
+        }
+        document.removeEventListener("keydown", onMessageEscape);
+      }
+
+      function onMessageEscape(e) {
+        if (e.key === "Escape") closeMessagePopup();
+      }
+
+      function openMessagePopup(text) {
+        messagePopupText.textContent = text;
+        messagePopup.removeAttribute("hidden");
+        messagePopup.setAttribute("aria-hidden", "false");
+        requestAnimationFrame(() => messagePopup.classList.add("is-open"));
+        document.body.style.overflow = "hidden";
+        document.addEventListener("keydown", onMessageEscape);
+        messagePopupOk.focus();
+      }
+
+      async function destroyEmbeddedCheckout() {
+        if (embeddedCheckoutInstance) {
+          try {
+            await embeddedCheckoutInstance.destroy();
+          } catch (_) {}
+          embeddedCheckoutInstance = null;
+        }
+        embeddedCheckoutHost.innerHTML = "";
+      }
+
+      function resetPaymentPlanStep() {
+        paymentStepEmbed.hidden = true;
+        paymentStepPlans.hidden = false;
+        paymentPopup.querySelectorAll(".btn-plan-embed").forEach((b) => {
+          b.disabled = false;
+        });
+      }
+
+      function closePaymentPopup() {
+        destroyEmbeddedCheckout().finally(() => {
+          resetPaymentPlanStep();
+          paymentPopup.classList.remove("is-open");
+          paymentPopup.setAttribute("aria-hidden", "true");
+          paymentPopup.setAttribute("hidden", "");
+          if (
+            !resultPopup.classList.contains("is-open") &&
+            !messagePopup.classList.contains("is-open")
+          ) {
+            document.body.style.overflow = "";
+          }
+          document.removeEventListener("keydown", onPaymentEscape);
+          btnCheck.disabled = false;
+        });
+      }
+
+      function onPaymentEscape(e) {
+        if (e.key === "Escape") closePaymentPopup();
+      }
+
+      function openPaymentPlanModal() {
+        resetPaymentPlanStep();
+        destroyEmbeddedCheckout().finally(() => {
+          paymentPopup.removeAttribute("hidden");
+          paymentPopup.setAttribute("aria-hidden", "false");
+          requestAnimationFrame(() => paymentPopup.classList.add("is-open"));
+          document.body.style.overflow = "hidden";
+          document.addEventListener("keydown", onPaymentEscape);
+          paymentPopup.querySelector(".btn-plan-embed")?.focus();
+        });
+      }
+
       async function refreshQuotaBar() {
         const cid = localStorage.getItem(CUSTOMER_KEY);
         if (!cid) {
@@ -1704,33 +1794,49 @@
       }
 
       async function startCheckoutPlan(plan) {
-        const cid = localStorage.getItem(CUSTOMER_KEY);
-        result.textContent = t("payRedirecting");
-        planRow.querySelectorAll(".btn-plan").forEach((b) => {
+        paymentStepPlans.hidden = true;
+        paymentStepEmbed.hidden = false;
+        const statusEl = document.getElementById("payment-embed-status");
+        statusEl.textContent = t("payLoadingCheckout");
+        statusEl.hidden = false;
+        paymentPopup.querySelectorAll(".btn-plan-embed").forEach((b) => {
           b.disabled = true;
         });
-        btnCheck.disabled = true;
         try {
+          await loadStripeJs();
+          const cid = localStorage.getItem(CUSTOMER_KEY);
           const r = await fetch("/.netlify/functions/create-checkout", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               plan,
               customer: cid || undefined,
+              embedded: true,
             }),
           });
           const data = await r.json().catch(() => ({}));
-          if (!r.ok || !data.url) {
+          if (!r.ok || !data.clientSecret || !data.publishableKey) {
             throw new Error(data.error || "checkout");
           }
-          window.location.href = data.url;
-        } catch {
-          result.textContent = t("payCheckoutError");
-          planRow.querySelectorAll(".btn-plan").forEach((b) => {
-            b.disabled = false;
+          statusEl.textContent = "";
+          statusEl.hidden = true;
+          const stripe = window.Stripe(data.publishableKey);
+          embeddedCheckoutInstance = await stripe.initEmbeddedCheckout({
+            clientSecret: data.clientSecret,
           });
-          btnCheck.disabled = false;
+          await embeddedCheckoutInstance.mount("#embedded-checkout");
+        } catch (e) {
+          console.error(e);
+          statusEl.hidden = false;
+          statusEl.textContent = t("payLoadingCheckout");
+          openMessagePopup(t("payCheckoutError"));
+          paymentStepEmbed.hidden = true;
+          paymentStepPlans.hidden = false;
+          embeddedCheckoutHost.innerHTML = "";
         }
+        paymentPopup.querySelectorAll(".btn-plan-embed").forEach((b) => {
+          b.disabled = false;
+        });
       }
 
       function applyStaticStrings() {
@@ -1741,6 +1847,12 @@
           const key = el.getAttribute("data-i18n");
           if (key && STR[currentLang][key] != null) {
             el.textContent = t(key);
+          }
+        });
+        document.querySelectorAll("[data-i18n-aria-label]").forEach((el) => {
+          const key = el.getAttribute("data-i18n-aria-label");
+          if (key && STR[currentLang][key] != null) {
+            el.setAttribute("aria-label", t(key));
           }
         });
         const ariaKey = langBar.getAttribute("data-i18n-aria-label");
@@ -1765,7 +1877,12 @@
         resultPopup.classList.remove("is-open");
         resultPopup.setAttribute("aria-hidden", "true");
         resultPopup.setAttribute("hidden", "");
-        document.body.style.overflow = "";
+        if (
+          !paymentPopup.classList.contains("is-open") &&
+          !messagePopup.classList.contains("is-open")
+        ) {
+          document.body.style.overflow = "";
+        }
         document.removeEventListener("keydown", onPopupEscape);
       }
 
@@ -1792,11 +1909,7 @@
           result.textContent = t("resultPrefix") + paidLargest;
           return;
         }
-        if (needsRecheck) {
-          result.textContent = t("resultHint");
-          return;
-        }
-        result.textContent = t("resultHint");
+        result.textContent = "";
       }
 
       langButtons.forEach((btn) => {
@@ -1806,14 +1919,14 @@
       btnCheck.addEventListener("click", async () => {
         const raw = [n1.value, n2.value, n3.value];
         if (raw.some((s) => s.trim() === "")) {
-          result.textContent = t("resultEmpty");
-          planRow.hidden = true;
+          result.textContent = "";
+          openMessagePopup(t("resultEmpty"));
           return;
         }
         const nums = raw.map((s) => Number(s));
         if (nums.some((n) => Number.isNaN(n))) {
-          result.textContent = t("resultInvalid");
-          planRow.hidden = true;
+          result.textContent = "";
+          openMessagePopup(t("resultInvalid"));
           return;
         }
         needsRecheck = false;
@@ -1834,7 +1947,6 @@
             });
             const data = await r.json().catch(() => ({}));
             if (r.ok) {
-              planRow.hidden = true;
               paidReveal = true;
               paidLargest = String(data.largest);
               paidSnapshot = {
@@ -1842,35 +1954,64 @@
                 n2: n2.value.trim(),
                 n3: n3.value.trim(),
               };
-              result.textContent = t("resultPrefix") + paidLargest;
+              result.textContent = "";
               openResultPopup(paidLargest);
               await refreshQuotaBar();
               btnCheck.disabled = false;
               return;
             }
             if (r.status === 402) {
-              result.textContent = t("payNeed");
-              planRow.hidden = false;
+              result.textContent = "";
               needsRecheck = true;
               btnCheck.disabled = false;
+              openPaymentPlanModal();
               return;
             }
             throw new Error(data.error || "consume");
           } catch {
-            result.textContent = t("payCheckoutError");
+            result.textContent = "";
+            openMessagePopup(t("payCheckoutError"));
             needsRecheck = true;
+            btnCheck.disabled = false;
           }
         } else {
-          result.textContent = t("payNeed");
-          planRow.hidden = false;
+          result.textContent = "";
           needsRecheck = true;
+          btnCheck.disabled = false;
+          openPaymentPlanModal();
         }
         btnCheck.disabled = false;
       });
 
-      planRow.querySelectorAll("[data-checkout-plan]").forEach((btn) => {
+      paymentPopup.querySelectorAll(".btn-plan-embed").forEach((btn) => {
         btn.addEventListener("click", () => {
           startCheckoutPlan(btn.getAttribute("data-checkout-plan"));
+        });
+      });
+
+      paymentBackPlans.addEventListener("click", () => {
+        destroyEmbeddedCheckout().finally(() => {
+          const statusEl = document.getElementById("payment-embed-status");
+          statusEl.hidden = false;
+          statusEl.textContent = t("payLoadingCheckout");
+          paymentStepEmbed.hidden = true;
+          paymentStepPlans.hidden = false;
+        });
+      });
+
+      paymentPopupX.addEventListener("click", closePaymentPopup);
+      paymentPopup
+        .querySelectorAll("[data-close-payment]")
+        .forEach((el) => {
+          el.addEventListener("click", (e) => {
+            if (e.target === el) closePaymentPopup();
+          });
+        });
+
+      messagePopupOk.addEventListener("click", closeMessagePopup);
+      messagePopup.querySelectorAll("[data-close-message]").forEach((el) => {
+        el.addEventListener("click", (e) => {
+          if (e.target === el) closeMessagePopup();
         });
       });
 
@@ -1883,22 +2024,21 @@
       [n1, n2, n3].forEach((el) =>
         el.addEventListener("input", () => {
           needsRecheck = true;
-          planRow.hidden = true;
           if (paidSnapshot && !inputsMatchPaid()) {
             paidReveal = false;
             paidLargest = null;
             paidSnapshot = null;
           }
-          result.textContent = t("resultHint");
+          result.textContent = "";
         })
       );
 
       async function initFromUrl() {
         const params = new URLSearchParams(window.location.search);
         if (params.get("payment") === "canceled") {
-          result.textContent = t("payCanceled");
-          planRow.hidden = true;
+          result.textContent = "";
           history.replaceState({}, "", window.location.pathname);
+          openMessagePopup(t("payCanceled"));
           return;
         }
         const sid = params.get("session_id");
@@ -1919,18 +2059,16 @@
           }
           history.replaceState({}, "", window.location.pathname);
           localStorage.setItem(CUSTOMER_KEY, data.customerId);
-          planRow.hidden = true;
-          if (data.plan === "pack") {
-            result.textContent = t("paySuccessPack").replace(
-              "{{n}}",
-              String(data.credits ?? "")
-            );
-          } else {
-            result.textContent = t("paySuccessMonthly");
-          }
+          result.textContent = "";
+          const msg =
+            data.plan === "pack"
+              ? t("paySuccessPack").replace("{{n}}", String(data.credits ?? ""))
+              : t("paySuccessMonthly");
           await refreshQuotaBar();
+          openMessagePopup(msg);
         } catch {
-          result.textContent = t("payVerifyError");
+          result.textContent = "";
+          openMessagePopup(t("payVerifyError"));
           history.replaceState({}, "", window.location.pathname);
         }
         btnCheck.disabled = false;
