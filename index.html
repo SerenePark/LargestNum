@@ -280,7 +280,7 @@
       .result-popup {
         position: fixed;
         inset: 0;
-        z-index: 100;
+        z-index: 220;
         display: grid;
         place-items: center;
         padding: 1rem;
@@ -1554,6 +1554,7 @@
           popupClose: "Got it!",
           payRedirecting: "Opening secure payment…",
           payVerifying: "Verifying payment…",
+          payProcessing: "Processing payment…",
           payCanceled: "Payment was canceled. Tap Result to try again.",
           payCheckoutError:
             "Could not start checkout. Set STRIPE_SECRET_KEY on Netlify (and optional STRIPE_PRICE_* overrides).",
@@ -1568,7 +1569,6 @@
           quotaUnlimited: "Status: unlimited this billing period (subscription).",
           quotaCredits: "Remaining paid views: {{n}}",
           quotaDemo: "Demo · {{n}} views left",
-          demoLoading: "Demo checkout…",
           demoMonthlyOnly:
             "Demo mode: only the $4 (10-view) pack is simulated. Use live site for monthly.",
           payModalTitle: "See your result",
@@ -1594,6 +1594,7 @@
           popupClose: "확인!",
           payRedirecting: "안전한 결제 페이지로 이동 중…",
           payVerifying: "결제 확인 중…",
+          payProcessing: "결제 처리 중…",
           payCanceled: "결제가 취소되었습니다. 다시 결과를 눌러 주세요.",
           payCheckoutError:
             "결제를 시작할 수 없습니다. Netlify에 STRIPE_SECRET_KEY를 설정했는지 확인하세요.",
@@ -1608,7 +1609,6 @@
           quotaUnlimited: "상태: 이번 결제 주기 동안 무제한(구독)",
           quotaCredits: "남은 횟수: {{n}}회",
           quotaDemo: "데모 · 남은 {{n}}회",
-          demoLoading: "데모 결제 처리 중…",
           demoMonthlyOnly: "데모에서는 ₩5,000만 시뮬레이션됩니다. 월 구독은 실제 배포 사이트에서 이용하세요.",
           payModalTitle: "결과 보기",
           payModalSubtitle: "Stripe 안전 결제 — 아래에서 요금제를 고르세요.",
@@ -1633,6 +1633,7 @@
           popupClose: "知道了",
           payRedirecting: "正在打开安全支付页面…",
           payVerifying: "正在验证支付…",
+          payProcessing: "正在处理支付…",
           payCanceled: "已取消支付。请再次点击结果。",
           payCheckoutError:
             "无法开始结账。请在 Netlify 设置 STRIPE_SECRET_KEY（可选 STRIPE_PRICE_*）。",
@@ -1646,7 +1647,6 @@
           quotaUnlimited: "状态：本账单周期内不限次数（订阅）",
           quotaCredits: "剩余次数：{{n}}",
           quotaDemo: "演示 · 剩余 {{n}} 次",
-          demoLoading: "演示支付处理中…",
           demoMonthlyOnly: "演示模式仅模拟 ¥26 次数包。月付请在正式环境使用。",
           payModalTitle: "查看结果",
           payModalSubtitle: "Stripe 安全收银台 — 请在下方选择方案。",
@@ -2289,6 +2289,14 @@
       }
 
       async function runDemoPackLoading() {
+        const snapRaw = [n1.value.trim(), n2.value.trim(), n3.value.trim()];
+        const snapNums = snapRaw.map((s) => Number(s));
+        const snapBad =
+          snapRaw.some((s) => s === "") ||
+          snapNums.some((n) => Number.isNaN(n));
+
+        await destroyEmbeddedCheckout();
+
         paymentPopup.querySelectorAll(".btn-plan-embed").forEach((b) => {
           b.disabled = true;
         });
@@ -2298,10 +2306,10 @@
         statusEl.hidden = true;
         embeddedCheckoutHost.innerHTML =
           "<div class=\"demo-loading\" role=\"status\"><div class=\"demo-loading__rainbow\" aria-hidden=\"true\"></div><p class=\"demo-loading__label\"></p></div>";
-        embeddedCheckoutHost.querySelector(".demo-loading__label").textContent =
-          t("demoLoading");
+        const labelEl = embeddedCheckoutHost.querySelector(".demo-loading__label");
+        if (labelEl) labelEl.textContent = t("payProcessing");
         await new Promise((r) => setTimeout(r, 1000));
-        setDemoCredits(getDemoCredits() + 10);
+
         embeddedCheckoutHost.innerHTML = "";
         statusEl.hidden = false;
         statusEl.textContent = t("payLoadingCheckout");
@@ -2317,19 +2325,29 @@
         paymentPopup.setAttribute("hidden", "");
         document.removeEventListener("keydown", onPaymentEscape);
 
-        const nv = [Number(n1.value), Number(n2.value), Number(n3.value)];
-        const largest = String(Math.max(nv[0], nv[1], nv[2]));
+        if (snapBad) {
+          openMessagePopup(t("resultInvalid"));
+          btnCheck.disabled = false;
+          return;
+        }
+
+        setDemoCredits(getDemoCredits() + 10);
+        const largest = String(Math.max(snapNums[0], snapNums[1], snapNums[2]));
         paidReveal = true;
         paidLargest = largest;
         paidSnapshot = {
-          n1: n1.value.trim(),
-          n2: n2.value.trim(),
-          n3: n3.value.trim(),
+          n1: snapRaw[0],
+          n2: snapRaw[1],
+          n3: snapRaw[2],
         };
         result.textContent = "";
         await refreshQuotaBar();
-        openResultPopup(largest);
-        btnCheck.disabled = false;
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            openResultPopup(largest);
+            btnCheck.disabled = false;
+          });
+        });
       }
 
       async function startCheckoutPlan(plan) {
