@@ -55,12 +55,21 @@ exports.handler = async (event) => {
   const base = siteUrl();
   const priceId = plan === "monthly" ? PRICE_MONTHLY : PRICE_PACK;
   const mode = plan === "monthly" ? "subscription" : "payment";
+  const embedded = body.embedded === true;
+
+  if (embedded && !process.env.STRIPE_PUBLISHABLE_KEY) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({
+        error: "Missing STRIPE_PUBLISHABLE_KEY (required for embedded checkout)",
+      }),
+    };
+  }
 
   const params = {
     mode,
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${base}/?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${base}/?payment=canceled`,
     metadata: { plan },
   };
 
@@ -71,6 +80,22 @@ exports.handler = async (event) => {
   }
 
   try {
+    if (embedded) {
+      params.ui_mode = "embedded";
+      params.return_url = `${base}/?session_id={CHECKOUT_SESSION_ID}`;
+      const session = await stripe.checkout.sessions.create(params);
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          clientSecret: session.client_secret,
+          publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+        }),
+      };
+    }
+
+    params.success_url = `${base}/?session_id={CHECKOUT_SESSION_ID}`;
+    params.cancel_url = `${base}/?payment=canceled`;
     const session = await stripe.checkout.sessions.create(params);
     return {
       statusCode: 200,
