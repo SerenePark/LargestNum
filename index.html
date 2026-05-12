@@ -1547,6 +1547,7 @@
       [n1, n2, n3].forEach((el) =>
         el.addEventListener("input", () => {
           needsRecheck = true;
+          planRow.hidden = true;
           if (paidSnapshot && !inputsMatchPaid()) {
             paidReveal = false;
             paidLargest = null;
@@ -1560,7 +1561,7 @@
         const params = new URLSearchParams(window.location.search);
         if (params.get("payment") === "canceled") {
           result.textContent = t("payCanceled");
-          planRow.hidden = false;
+          planRow.hidden = true;
           history.replaceState({}, "", window.location.pathname);
           return;
         }
