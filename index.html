@@ -859,46 +859,6 @@
         transform: none;
       }
 
-      .plan-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-top: 0.85rem;
-      }
-
-      /* `display:flex` beats the UA default for [hidden]; force hide when closed */
-      .plan-row[hidden] {
-        display: none !important;
-      }
-
-      .btn-plan {
-        flex: 1;
-        min-width: 10rem;
-        padding: 0.55rem 0.75rem;
-        font: inherit;
-        font-size: 0.8125rem;
-        font-weight: 700;
-        border-radius: 10px;
-        cursor: pointer;
-        border: 2px solid rgba(124, 58, 237, 0.45);
-        background: rgba(255, 255, 255, 0.65);
-        color: #5b21b6;
-        transition: background 0.2s, transform 0.15s;
-      }
-
-      @media (prefers-color-scheme: dark) {
-        .btn-plan {
-          background: rgba(30, 27, 50, 0.8);
-          border-color: rgba(167, 139, 250, 0.45);
-          color: #e9d5ff;
-        }
-      }
-
-      .btn-plan:hover {
-        background: rgba(124, 58, 237, 0.12);
-        transform: translateY(-1px);
-      }
-
       .quota-bar {
         margin-top: 0.65rem;
         font-size: 0.8125rem;
@@ -917,34 +877,308 @@
         }
       }
 
-      #result {
-        margin-top: 1.15rem;
-        padding: 1rem 1rem 1.05rem;
-        border-radius: 14px;
-        font-size: 0.98rem;
+      #result:empty {
+        display: none !important;
+        margin: 0;
+        padding: 0;
+        min-height: 0;
+        border: none;
+        background: none;
+      }
+
+      #result:not(:empty) {
+        margin-top: 0.65rem;
+        font-size: 0.875rem;
         font-weight: 600;
         line-height: 1.45;
-        color: #475569;
-        background: linear-gradient(
-          145deg,
-          rgba(124, 58, 237, 0.08),
-          rgba(6, 182, 212, 0.06)
-        );
-        border: 1px solid rgba(124, 58, 237, 0.15);
-        min-height: 3.25rem;
-        display: flex;
-        align-items: center;
+        color: #64748b;
       }
 
       @media (prefers-color-scheme: dark) {
-        #result {
-          color: #cbd5e1;
+        #result:not(:empty) {
+          color: #94a3b8;
+        }
+      }
+
+      .message-popup {
+        position: fixed;
+        inset: 0;
+        z-index: 160;
+        display: grid;
+        place-items: center;
+        padding: 1rem;
+        pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.22s ease, visibility 0.22s;
+      }
+
+      .message-popup.is-open {
+        pointer-events: auto;
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .message-popup[hidden] {
+        display: none !important;
+      }
+
+      .message-popup__scrim {
+        position: absolute;
+        inset: 0;
+        cursor: pointer;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(8px);
+      }
+
+      .message-popup__dialog {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 22rem);
+        padding: 1.5rem 1.35rem;
+        border-radius: 18px;
+        text-align: center;
+        background: linear-gradient(
+          165deg,
+          rgba(255, 255, 255, 0.97),
+          rgba(250, 245, 255, 0.95)
+        );
+        border: 2px solid rgba(124, 58, 237, 0.35);
+        box-shadow: 0 0 40px rgba(124, 58, 237, 0.25),
+          0 20px 50px rgba(0, 0, 0, 0.15);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .message-popup__dialog {
           background: linear-gradient(
-            145deg,
-            rgba(124, 58, 237, 0.18),
-            rgba(6, 182, 212, 0.12)
+            165deg,
+            rgba(30, 27, 50, 0.96),
+            rgba(15, 23, 42, 0.94)
           );
-          border-color: rgba(167, 139, 250, 0.22);
+          border-color: rgba(167, 139, 250, 0.35);
+        }
+      }
+
+      .message-popup__text {
+        margin: 0 0 1rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        line-height: 1.5;
+        color: #334155;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .message-popup__text {
+          color: #e2e8f0;
+        }
+      }
+
+      .message-popup__btn {
+        font: inherit;
+        font-weight: 800;
+        padding: 0.55rem 1.5rem;
+        border: none;
+        border-radius: 999px;
+        cursor: pointer;
+        color: #fff;
+        background: linear-gradient(120deg, #7c3aed, #2563eb, #db2777);
+        box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+      }
+
+      .payment-popup {
+        position: fixed;
+        inset: 0;
+        z-index: 150;
+        display: grid;
+        place-items: center;
+        padding: 1rem;
+        pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.28s ease, visibility 0.28s;
+      }
+
+      .payment-popup.is-open {
+        pointer-events: auto;
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .payment-popup[hidden] {
+        display: none !important;
+      }
+
+      .payment-popup__scrim {
+        position: absolute;
+        inset: 0;
+        cursor: pointer;
+        background: radial-gradient(
+            ellipse 100% 80% at 50% 100%,
+            rgba(124, 58, 237, 0.35),
+            rgba(15, 23, 42, 0.75)
+          ),
+          linear-gradient(
+            135deg,
+            rgba(236, 72, 153, 0.2),
+            rgba(6, 182, 212, 0.2)
+          );
+        backdrop-filter: blur(14px);
+      }
+
+      .payment-popup__dialog {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 28rem);
+        max-height: min(92vh, 760px);
+        overflow: auto;
+        padding: 2rem 1.65rem 1.5rem;
+        border-radius: 26px;
+        background: linear-gradient(
+          165deg,
+          rgba(255, 255, 255, 0.94),
+          rgba(252, 231, 243, 0.5),
+          rgba(240, 249, 255, 0.9)
+        );
+        border: 2px solid rgba(255, 255, 255, 0.9);
+        box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.12) inset,
+          0 0 60px rgba(124, 58, 237, 0.35),
+          0 24px 48px rgba(0, 0, 0, 0.18);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .payment-popup__dialog {
+          background: linear-gradient(
+            165deg,
+            rgba(22, 20, 42, 0.95),
+            rgba(15, 23, 42, 0.92)
+          );
+          border-color: rgba(167, 139, 250, 0.25);
+          box-shadow: 0 0 70px rgba(139, 92, 246, 0.25),
+            0 24px 48px rgba(0, 0, 0, 0.45);
+        }
+      }
+
+      .payment-popup__title {
+        margin: 0 0 0.35rem;
+        font-size: 1.35rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+        background: linear-gradient(
+          115deg,
+          #7c3aed,
+          #db2777,
+          #0891b2,
+          #eab308
+        );
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: rainbow-flow 4s linear infinite;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .payment-popup__title {
+          animation: none;
+        }
+      }
+
+      .payment-popup__subtitle {
+        margin: 0 0 1.1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #64748b;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .payment-popup__subtitle {
+          color: #94a3b8;
+        }
+      }
+
+      .payment-popup__plan-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+      }
+
+      .btn-plan-embed {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        font: inherit;
+        font-size: 0.9rem;
+        font-weight: 800;
+        border-radius: 14px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        color: #fff;
+        background: linear-gradient(120deg, #7c3aed, #4f46e5, #0891b2);
+        background-size: 180% auto;
+        box-shadow: 0 8px 28px rgba(124, 58, 237, 0.4);
+        transition: transform 0.15s, filter 0.15s;
+      }
+
+      .btn-plan-embed:last-of-type {
+        background: linear-gradient(120deg, #db2777, #9333ea, #2563eb);
+        box-shadow: 0 8px 28px rgba(219, 39, 119, 0.35);
+      }
+
+      .btn-plan-embed:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.05);
+      }
+
+      .btn-plan-embed:disabled {
+        opacity: 0.55;
+        cursor: wait;
+        transform: none;
+      }
+
+      #embedded-checkout {
+        margin-top: 0.5rem;
+        min-height: 420px;
+      }
+
+      .payment-popup__back {
+        margin-top: 1rem;
+        font: inherit;
+        font-weight: 700;
+        font-size: 0.875rem;
+        padding: 0.45rem 0.85rem;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        background: rgba(124, 58, 237, 0.12);
+        color: #5b21b6;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .payment-popup__back {
+          background: rgba(167, 139, 250, 0.15);
+          color: #e9d5ff;
+        }
+      }
+
+      .payment-popup__x {
+        position: absolute;
+        top: 0.55rem;
+        right: 0.55rem;
+        width: 2.25rem;
+        height: 2.25rem;
+        border: none;
+        border-radius: 999px;
+        font-size: 1.35rem;
+        line-height: 1;
+        cursor: pointer;
+        background: rgba(15, 23, 42, 0.06);
+        color: #64748b;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .payment-popup__x {
+          background: rgba(255, 255, 255, 0.08);
+          color: #cbd5e1;
         }
       }
     </style>
@@ -982,20 +1216,6 @@
       </button>
 
       <p id="quota-bar" class="quota-bar" hidden aria-live="polite"></p>
-
-      <div id="plan-row" class="plan-row" hidden>
-        <button type="button" class="btn-plan" data-checkout-plan="pack" data-i18n="btnPlanPack">
-          ₩5,000 · 10 views
-        </button>
-        <button
-          type="button"
-          class="btn-plan"
-          data-checkout-plan="monthly"
-          data-i18n="btnPlanMonthly"
-        >
-          ₩50,000 · Unlimited / month
-        </button>
-      </div>
 
       <p id="result" aria-live="polite"></p>
     </main>
@@ -1036,6 +1256,86 @@
       </div>
     </div>
 
+    <div
+      id="payment-popup"
+      class="payment-popup"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="payment-popup-title"
+      aria-hidden="true"
+      hidden
+    >
+      <div class="payment-popup__scrim" data-close-payment tabindex="-1"></div>
+      <div class="payment-popup__dialog">
+        <button
+          type="button"
+          class="payment-popup__x"
+          id="payment-popup-x"
+          aria-label="Close"
+          data-i18n-aria-label="payModalCloseAria"
+        >
+          ×
+        </button>
+        <div id="payment-step-plans">
+          <h2 id="payment-popup-title" class="payment-popup__title" data-i18n="payModalTitle">
+            Choose a pass
+          </h2>
+          <p class="payment-popup__subtitle" data-i18n="payModalSubtitle">
+            Secure checkout by Stripe — pick a plan to continue.
+          </p>
+          <div class="payment-popup__plan-grid">
+            <button
+              type="button"
+              class="btn-plan-embed"
+              data-checkout-plan="pack"
+              data-i18n="btnPlanPack"
+            >
+              ₩5,000 · 10 views
+            </button>
+            <button
+              type="button"
+              class="btn-plan-embed"
+              data-checkout-plan="monthly"
+              data-i18n="btnPlanMonthly"
+            >
+              ₩50,000 · Unlimited / month
+            </button>
+          </div>
+        </div>
+        <div id="payment-step-embed" hidden>
+          <p
+            id="payment-embed-status"
+            class="payment-popup__subtitle"
+            style="margin-bottom: 0.5rem"
+            data-i18n="payLoadingCheckout"
+          >
+            Loading checkout…
+          </p>
+          <div id="embedded-checkout"></div>
+          <button type="button" class="payment-popup__back" id="payment-back-plans" data-i18n="payModalBack">
+            ← Back to plans
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="message-popup"
+      class="message-popup"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+      hidden
+    >
+      <div class="message-popup__scrim" data-close-message tabindex="-1"></div>
+      <div class="message-popup__dialog">
+        <p id="message-popup-text" class="message-popup__text"></p>
+        <button type="button" class="message-popup__btn" id="message-popup-ok" data-i18n="msgOk">
+          OK
+        </button>
+      </div>
+    </div>
+
     <script>
       const STR = {
         en: {
@@ -1066,6 +1366,12 @@
           btnPlanMonthly: "₩50,000 · Unlimited (monthly)",
           quotaUnlimited: "Status: unlimited this billing period (subscription).",
           quotaCredits: "Remaining paid views: {{n}}",
+          payModalTitle: "Choose a pass",
+          payModalSubtitle: "Stripe secure checkout — pick a plan below.",
+          payModalBack: "← Back to plans",
+          payModalCloseAria: "Close payment window",
+          payLoadingCheckout: "Loading checkout…",
+          msgOk: "OK",
           ariaLang: "Language",
         },
         ko: {
@@ -1096,6 +1402,12 @@
           btnPlanMonthly: "₩50,000 · 한 달 무제한(구독)",
           quotaUnlimited: "상태: 이번 결제 주기 동안 무제한(구독)",
           quotaCredits: "남은 횟수: {{n}}회",
+          payModalTitle: "이용권 선택",
+          payModalSubtitle: "Stripe 안전 결제 — 아래에서 요금제를 고르세요.",
+          payModalBack: "← 요금제로 돌아가기",
+          payModalCloseAria: "결제 창 닫기",
+          payLoadingCheckout: "결제 화면 불러오는 중…",
+          msgOk: "확인",
           ariaLang: "언어",
         },
         zh: {
@@ -1125,6 +1437,12 @@
           btnPlanMonthly: "₩50,000 · 按月不限（订阅）",
           quotaUnlimited: "状态：本账单周期内不限次数（订阅）",
           quotaCredits: "剩余次数：{{n}}",
+          payModalTitle: "选择套餐",
+          payModalSubtitle: "Stripe 安全收银台 — 请在下方选择方案。",
+          payModalBack: "← 返回套餐",
+          payModalCloseAria: "关闭付款窗口",
+          payLoadingCheckout: "正在加载收银台…",
+          msgOk: "确定",
           ariaLang: "语言",
         },
       };
@@ -1141,10 +1459,19 @@
       const popupSparkles = document.getElementById("popup-sparkles");
       const langBar = document.querySelector(".lang-bar");
       const langButtons = langBar.querySelectorAll("[data-lang]");
-      const planRow = document.getElementById("plan-row");
-      const quotaBar = document.getElementById("quota-bar");
+      const paymentPopup = document.getElementById("payment-popup");
+      const paymentStepPlans = document.getElementById("payment-step-plans");
+      const paymentStepEmbed = document.getElementById("payment-step-embed");
+      const embeddedCheckoutHost = document.getElementById("embedded-checkout");
+      const messagePopup = document.getElementById("message-popup");
+      const messagePopupText = document.getElementById("message-popup-text");
+      const messagePopupOk = document.getElementById("message-popup-ok");
+      const paymentPopupX = document.getElementById("payment-popup-x");
+      const paymentBackPlans = document.getElementById("payment-back-plans");
 
       const CUSTOMER_KEY = "largest-number-stripe-customer-id";
+
+      let embeddedCheckoutInstance = null;
 
       const LANG_KEY = "largest-number-lang";
       const supported = ["en", "ko", "zh"];
