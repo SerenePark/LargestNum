@@ -728,3 +728,38 @@ body.shake-input #age-input {
     transform: scale(1) translateY(0);
   }
 }
+
+/* ——— Interstitial ad (before result) ——— */
+.interstitial-ad-root {
+  display: none;
+}
+
+.interstitial-ad-root.is-open {
+  display: flex;
+}
+
+.interstitial-ad-close {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: scale(0.88);
+}
+
+.interstitial-ad-root.is-close-ready .interstitial-ad-close {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: scale(1);
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.34, 1.25, 0.64, 1);
+}
+
+/* ——— Language toggle ——— */
+.lang-toggle .lang-btn.is-active {
+  background: rgba(251, 191, 36, 0.22);
+  color: #fde68a;
+}
+
+.lang-toggle .lang-btn:hover:not(.is-active) {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f1f5f9;
+}

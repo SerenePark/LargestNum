@@ -1,13 +1,73 @@
 (function ($) {
   "use strict";
 
+  var LANG_KEY = "agever_lang";
   var COOKIE_NAME = "agever_cookie_consent";
   var COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 365;
-  var CAPTCHA_PROCESS_MS = 2000;
+  var CAPTCHA_PROCESS_MS = 1000;
+  var AD_CLOSE_REVEAL_MS = 2000;
+
+  var STRINGS = {
+    ko: {
+      "page.title": "연령 확인",
+      "page.heading": "연령 확인",
+      "page.subtitle": "나이를 입력한 뒤 아래 버튼을 눌러주세요.",
+      "form.ageLabel": "나이",
+      "form.placeholder": "예: 20",
+      "form.verifyBtn": "연령 확인",
+      "cookie.title": "쿠키가 필요합니다",
+      "cookie.body":
+        "연령 확인 결과를 보여드리려면 최소한의 쿠키 저장이 필요합니다. 동의하시면 결과 화면으로 이동합니다.",
+      "cookie.cancel": "취소",
+      "cookie.confirm": "확인",
+      "captcha.lead": "보안 확인 (연출용)",
+      "captcha.notRobot": "로봇이 아닙니다",
+      "captcha.securityLabel": "보안",
+      "captcha.processing": "확인 중…",
+      "captcha.disclaimer": "이 단계는 실제 봇 검사가 아니라 화면 연출입니다.",
+      "ad.alt": "점핑캣 아케이드 광고",
+      "ad.closeAria": "광고 닫기",
+      "result.adultTitle": "당신은 성인입니다",
+      "result.adultSub": "만 18세 이상으로 확인되었습니다.",
+      "result.minorTitle": "당신은 미성년자입니다",
+      "result.minorSub": "만 18세 이하로 확인되었습니다.",
+      "result.ok": "확인",
+      "result.closeAria": "닫기",
+    },
+    en: {
+      "page.title": "Age verification",
+      "page.heading": "Age verification",
+      "page.subtitle": "Enter your age and tap the button below.",
+      "form.ageLabel": "Age",
+      "form.placeholder": "e.g. 20",
+      "form.verifyBtn": "Verify age",
+      "cookie.title": "Cookies required",
+      "cookie.body":
+        "We save a small cookie to show your age check result. If you agree, we’ll continue to the next step.",
+      "cookie.cancel": "Cancel",
+      "cookie.confirm": "OK",
+      "captcha.lead": "Security check (display only)",
+      "captcha.notRobot": "I'm not a robot",
+      "captcha.securityLabel": "Sec",
+      "captcha.processing": "Verifying…",
+      "captcha.disclaimer": "This step is for show only — not a real bot check.",
+      "ad.alt": "Jumping Cat Arcade ad",
+      "ad.closeAria": "Close ad",
+      "result.adultTitle": "You are an adult.",
+      "result.adultSub": "Verified as age 18 or older.",
+      "result.minorTitle": "You are a minor.",
+      "result.minorSub": "Verified as age 18 or under.",
+      "result.ok": "OK",
+      "result.closeAria": "Close",
+    },
+  };
 
   var $modal = $("#result-modal");
   var $cookieModal = $("#cookie-consent-modal");
   var $captchaModal = $("#fake-captcha-modal");
+  var $adModal = $("#interstitial-ad-modal");
+  var $adClose = $("#interstitial-ad-close");
+  var $adImage = $("#interstitial-ad-image");
   var $captchaTrigger = $("#fake-captcha-trigger");
   var $captchaProcessing = $("#fake-captcha-processing");
   var $message = $("#modal-message");
@@ -18,8 +78,90 @@
   var $floatFx = $("#modal-float-fx");
 
   var pendingIsAdult = null;
+  var pendingAfterAd = null;
   var captchaBusy = false;
   var captchaTimer = null;
+  var adRevealTimer = null;
+
+  function getLang() {
+    return localStorage.getItem(LANG_KEY) === "en" ? "en" : "ko";
+  }
+
+  function setLang(lang) {
+    localStorage.setItem(LANG_KEY, lang === "en" ? "en" : "ko");
+    applyLang();
+  }
+
+  function t(key) {
+    var lang = getLang();
+    var pack = STRINGS[lang];
+    if (pack && Object.prototype.hasOwnProperty.call(pack, key)) {
+      return pack[key];
+    }
+    return STRINGS.ko[key] !== undefined ? STRINGS.ko[key] : key;
+  }
+
+  function applyLang() {
+    var lang = getLang();
+    $("#root-html").attr("lang", lang === "en" ? "en" : "ko");
+    document.title = t("page.title");
+
+    $("[data-i18n]").each(function () {
+      var key = $(this).attr("data-i18n");
+      if (key) {
+        $(this).text(t(key));
+      }
+    });
+    $("[data-i18n-alt]").each(function () {
+      var key = $(this).attr("data-i18n-alt");
+      if (key) {
+        $(this).attr("alt", t(key));
+      }
+    });
+    $("[data-i18n-aria]").each(function () {
+      var key = $(this).attr("data-i18n-aria");
+      if (key) {
+        $(this).attr("aria-label", t(key));
+      }
+    });
+
+    $input.attr("placeholder", t("form.placeholder"));
+    updateAdImageSrc();
+    refreshOpenResultTexts();
+
+    $(".lang-btn").removeClass("is-active");
+    $(".lang-btn[data-lang=\"" + lang + "\"]").addClass("is-active");
+
+    if (window.lucide && typeof lucide.createIcons === "function") {
+      lucide.createIcons();
+    }
+  }
+
+  function updateAdImageSrc() {
+    if (!$adImage.length) {
+      return;
+    }
+    var lang = getLang();
+    var src = lang === "en" ? $adImage.attr("data-src-en") : $adImage.attr("data-src-ko");
+    if (src) {
+      $adImage.attr("src", src);
+    }
+    $adImage.attr("alt", t("ad.alt"));
+  }
+
+  function refreshOpenResultTexts() {
+    if (!$modal.hasClass("is-open")) {
+      return;
+    }
+    var r = $modal.attr("data-result");
+    if (r === "adult") {
+      $message.text(t("result.adultTitle"));
+      $sub.text(t("result.adultSub"));
+    } else if (r === "minor") {
+      $message.text(t("result.minorTitle"));
+      $sub.text(t("result.minorSub"));
+    }
+  }
 
   function getRequest(name) {
     var params = new URLSearchParams(window.location.search);
@@ -55,6 +197,11 @@
   var prefillAge = getRequest("age");
   if (prefillAge !== "" && /^\d+$/.test(prefillAge)) {
     $input.val(prefillAge);
+  }
+
+  var urlLang = getRequest("lang");
+  if (urlLang === "en" || urlLang === "ko") {
+    localStorage.setItem(LANG_KEY, urlLang);
   }
 
   function clearFx() {
@@ -122,17 +269,19 @@
 
     if (isAdult) {
       $modal.addClass("theme-adult");
-      $message.text("당신은 성인입니다");
-      $sub.text("만 18세 이상으로 확인되었습니다.");
+      $message.text(t("result.adultTitle"));
+      $sub.text(t("result.adultSub"));
       setIcon("party-popper");
       spawnConfetti();
     } else {
       $modal.addClass("theme-minor");
-      $message.text("당신은 미성년자입니다");
-      $sub.text("만 18세 이하로 확인되었습니다.");
+      $message.text(t("result.minorTitle"));
+      $sub.text(t("result.minorSub"));
       setIcon("heart-handshake");
       spawnMinorFloat();
     }
+
+    $modal.attr("data-result", isAdult ? "adult" : "minor");
 
     $modal.removeClass("hidden").addClass("is-open");
     $modal.attr("aria-hidden", "false");
@@ -162,6 +311,7 @@
   function closeModal() {
     $modal.removeClass("is-open").addClass("hidden");
     $modal.attr("aria-hidden", "true");
+    $modal.removeAttr("data-result");
     $("body").css("overflow", "");
     clearFx();
   }
@@ -204,7 +354,7 @@
     resetCaptchaUi();
     $captchaModal.removeClass("is-open").addClass("hidden");
     $captchaModal.attr("aria-hidden", "true");
-    if (!$modal.hasClass("is-open") && !$cookieModal.hasClass("is-open")) {
+    if (!$modal.hasClass("is-open") && !$cookieModal.hasClass("is-open") && !$adModal.hasClass("is-open")) {
       $("body").css("overflow", "");
     }
   }
@@ -212,6 +362,48 @@
   function dismissCaptchaWithoutResult() {
     pendingIsAdult = null;
     closeFakeCaptchaModal();
+  }
+
+  function clearAdRevealTimer() {
+    if (adRevealTimer !== null) {
+      clearTimeout(adRevealTimer);
+      adRevealTimer = null;
+    }
+  }
+
+  function openInterstitialAd(isAdult) {
+    clearAdRevealTimer();
+    pendingAfterAd = isAdult;
+    updateAdImageSrc();
+    $adModal.removeClass("hidden is-close-ready").addClass("is-open");
+    $adModal.attr("aria-hidden", "false");
+    $adClose.prop("disabled", true).attr("aria-hidden", "true");
+    $("body").css("overflow", "hidden");
+
+    adRevealTimer = setTimeout(function () {
+      adRevealTimer = null;
+      $adModal.addClass("is-close-ready");
+      $adClose.prop("disabled", false).attr("aria-hidden", "false");
+      if (window.lucide && typeof lucide.createIcons === "function") {
+        lucide.createIcons();
+      }
+    }, AD_CLOSE_REVEAL_MS);
+  }
+
+  function closeInterstitialAdAndShowResult() {
+    if (!$adModal.hasClass("is-close-ready")) {
+      return;
+    }
+    var next = pendingAfterAd;
+    if (next === null) {
+      return;
+    }
+    pendingAfterAd = null;
+    clearAdRevealTimer();
+    $adModal.removeClass("is-open is-close-ready").addClass("hidden");
+    $adModal.attr("aria-hidden", "true");
+    $adClose.prop("disabled", true).attr("aria-hidden", "true");
+    openModal(next);
   }
 
   function onFakeCaptchaClick() {
@@ -233,7 +425,7 @@
       resetCaptchaUi();
       $captchaModal.removeClass("is-open").addClass("hidden");
       $captchaModal.attr("aria-hidden", "true");
-      openModal(next);
+      openInterstitialAd(next);
     }, CAPTCHA_PROCESS_MS);
   }
 
@@ -241,7 +433,7 @@
     pendingIsAdult = isAdult;
     $cookieModal.removeClass("hidden").addClass("is-open");
     $cookieModal.attr("aria-hidden", "false");
-    if (!$modal.hasClass("is-open") && !$captchaModal.hasClass("is-open")) {
+    if (!$modal.hasClass("is-open") && !$captchaModal.hasClass("is-open") && !$adModal.hasClass("is-open")) {
       $("body").css("overflow", "hidden");
     }
     var panel = $cookieModal.find(".cookie-consent-panel")[0];
@@ -259,7 +451,7 @@
     $cookieModal.removeClass("is-open").addClass("hidden");
     $cookieModal.attr("aria-hidden", "true");
     pendingIsAdult = null;
-    if (!$modal.hasClass("is-open") && !$captchaModal.hasClass("is-open")) {
+    if (!$modal.hasClass("is-open") && !$captchaModal.hasClass("is-open") && !$adModal.hasClass("is-open")) {
       $("body").css("overflow", "");
     }
   }
@@ -298,6 +490,10 @@
     openCookieModal(isAdult);
   }
 
+  $("#lang-toggle").on("click", ".lang-btn", function () {
+    setLang($(this).attr("data-lang"));
+  });
+
   $("#verify-btn").on("click", verify);
 
   $input.on("keydown", function (e) {
@@ -321,6 +517,10 @@
     dismissCaptchaWithoutResult();
   });
 
+  $adClose.on("click", function () {
+    closeInterstitialAdAndShowResult();
+  });
+
   $modal.on("click", "[data-modal-dismiss]", closeModal);
 
   $(document).on("keydown", function (e) {
@@ -337,10 +537,18 @@
       }
       return;
     }
+    if ($adModal.hasClass("is-open")) {
+      if ($adModal.hasClass("is-close-ready")) {
+        closeInterstitialAdAndShowResult();
+      }
+      return;
+    }
     if ($modal.hasClass("is-open")) {
       closeModal();
     }
   });
+
+  applyLang();
 
   if (window.lucide && typeof lucide.createIcons === "function") {
     lucide.createIcons();
