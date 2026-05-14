@@ -7,7 +7,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
-  <link rel="stylesheet" href="css/ageverification.css?v=7" />
+  <link rel="stylesheet" href="css/ageverification.css?v=8" />
+  <link rel="stylesheet" href="css/donation.css?v=2" />
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-amber-500/30">
   <div id="lang-toggle" class="lang-toggle fixed left-3 top-3 z-[70] flex overflow-hidden rounded-lg border border-white/15 bg-slate-900/90 shadow-lg backdrop-blur-md sm:left-4 sm:top-4" role="group" aria-label="Language">
@@ -134,6 +135,150 @@
     </button>
   </div>
 
+  <div id="donation-modal" class="donation-root fixed inset-0 z-[64] hidden items-center justify-center p-3 sm:p-4" aria-hidden="true">
+    <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md"></div>
+    <div class="donation-panel relative flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-rose-50 to-white px-4 py-3 sm:px-5">
+        <div class="flex min-w-0 items-center gap-2.5">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-600 text-white shadow-md">
+            <i data-lucide="heart-handshake" class="h-5 w-5"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="truncate text-xs font-semibold uppercase tracking-wide text-rose-700" data-i18n="donate.orgLine">희망나눔 휴먼니터리</p>
+            <p class="truncate text-sm font-bold text-slate-900 sm:text-base" data-i18n="donate.title">기부에 동참해 주세요</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          id="donation-close-skip"
+          class="donation-skip-icon shrink-0 rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+          data-i18n-aria="donate.closeAria"
+          aria-label="닫기"
+        >
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+
+      <div id="donation-scroll" class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div id="donation-form-step" class="px-4 py-4 sm:px-6 sm:py-5">
+          <p class="text-sm leading-relaxed text-slate-600" data-i18n="donate.subtitle">
+            어려움을 겪는 이웃을 위해 안전하게 기부할 수 있습니다. 금액을 선택한 뒤 결제 정보를 입력해 주세요.
+          </p>
+
+          <p class="mt-5 text-xs font-semibold uppercase tracking-wide text-slate-500" data-i18n="donate.amountLabel">기부 금액</p>
+          <div class="mt-2 grid grid-cols-3 gap-2">
+            <button type="button" class="donation-amt-btn rounded-xl border-2 border-slate-200 bg-slate-50 px-2 py-2.5 text-center text-sm font-semibold text-slate-800 transition hover:border-slate-300 sm:text-base" data-amt="10000">
+              <span data-i18n="donate.amt1">₩10,000</span>
+            </button>
+            <button type="button" class="donation-amt-btn rounded-xl border-2 border-slate-200 bg-slate-50 px-2 py-2.5 text-center text-sm font-semibold text-slate-800 transition hover:border-slate-300 sm:text-base" data-amt="30000">
+              <span data-i18n="donate.amt2">₩30,000</span>
+            </button>
+            <button type="button" class="donation-amt-btn rounded-xl border-2 border-slate-200 bg-slate-50 px-2 py-2.5 text-center text-sm font-semibold text-slate-800 transition hover:border-slate-300 sm:text-base" data-amt="50000">
+              <span data-i18n="donate.amt3">₩50,000</span>
+            </button>
+          </div>
+
+          <div class="donation-card-grid mt-5">
+            <div class="col-span-2 sm:col-span-2">
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="donation-card" data-i18n="donate.cardLabel">카드 번호</label>
+              <input
+                id="donation-card"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                maxlength="19"
+                placeholder="4242 4242 4242 4242"
+                class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm tracking-wide text-slate-900 outline-none ring-0 focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="donation-exp" data-i18n="donate.expLabel">만료</label>
+              <input
+                id="donation-exp"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                maxlength="5"
+                placeholder="MM/YY"
+                class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm text-slate-900 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="donation-cvc" data-i18n="donate.cvcLabel">CVC</label>
+              <input
+                id="donation-cvc"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                maxlength="4"
+                placeholder="123"
+                class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm text-slate-900 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+              />
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="donation-name" data-i18n="donate.nameLabel">카드 소유자 이름</label>
+            <input
+              id="donation-name"
+              type="text"
+              autocomplete="off"
+              data-i18n-placeholder="donate.namePh"
+              placeholder="홍길동"
+              class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+            />
+          </div>
+
+          <div class="mt-4 flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50/80 px-3 py-2 text-xs text-emerald-900">
+            <i data-lucide="lock" class="h-4 w-4 shrink-0 text-emerald-700"></i>
+            <span data-i18n="donate.secureNote">256-bit SSL 암호화로 보호됩니다. PCI DSS 준수 처리.</span>
+          </div>
+
+          <p class="mt-3 text-[11px] leading-relaxed text-slate-400" data-i18n="donate.disclaimer">
+            이 창은 연령 확인 데모의 연출용이며, 실제 기부·결제·카드 승인은 이루어지지 않습니다. 입력 정보는 서버로 전송되지 않습니다.
+          </p>
+
+          <div class="mt-5 flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              id="donation-skip-btn"
+              class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              data-i18n="donate.skip"
+            >
+              나중에 하기
+            </button>
+            <button
+              type="button"
+              id="donation-submit-btn"
+              class="rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-600/25 transition hover:from-rose-500 hover:to-rose-600 disabled:opacity-70"
+              data-i18n="donate.submit"
+            >
+              기부하기
+            </button>
+          </div>
+        </div>
+
+        <div id="donation-thanks-step" class="px-4 py-10 text-center sm:px-8 sm:py-12">
+          <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+            <i data-lucide="check-circle-2" class="h-10 w-10"></i>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900" data-i18n="donate.thanksTitle">감사합니다</h3>
+          <p class="mt-2 text-sm leading-relaxed text-slate-600" data-i18n="donate.thanksSub">
+            데모 연출로 실제 결제는 진행되지 않았습니다. 곧 연령 확인 결과를 보여 드립니다.
+          </p>
+          <button
+            type="button"
+            id="donation-thanks-continue"
+            class="mt-8 w-full max-w-xs rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            data-i18n="donate.thanksBtn"
+          >
+            연령 결과 보기
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="result-modal" class="modal-root fixed inset-0 z-50 hidden items-center justify-center p-4" aria-hidden="true">
     <div class="modal-backdrop absolute inset-0 z-[10] cursor-pointer" data-modal-dismiss></div>
     <div class="modal-vignette absolute inset-0 z-[11] pointer-events-none" aria-hidden="true"></div>
@@ -191,6 +336,6 @@
     </div>
   </div>
 
-  <script src="js/ageverification.js?v=7"></script>
+  <script src="js/ageverification.js?v=9"></script>
 </body>
 </html>

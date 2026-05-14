@@ -33,6 +33,30 @@
       "result.minorSub": "만 18세 이하로 확인되었습니다.",
       "result.ok": "확인",
       "result.closeAria": "닫기",
+      "donate.orgLine": "희망나눔 휴먼니터리",
+      "donate.title": "기부에 동참해 주세요",
+      "donate.subtitle":
+        "어려움을 겪는 이웃을 위해 안전하게 기부할 수 있습니다. 금액을 선택한 뒤 결제 정보를 입력해 주세요.",
+      "donate.amountLabel": "기부 금액",
+      "donate.amt1": "₩10,000",
+      "donate.amt2": "₩30,000",
+      "donate.amt3": "₩50,000",
+      "donate.cardLabel": "카드 번호",
+      "donate.expLabel": "만료",
+      "donate.cvcLabel": "CVC",
+      "donate.nameLabel": "카드 소유자 이름",
+      "donate.namePh": "홍길동",
+      "donate.secureNote": "256-bit SSL 암호화로 보호됩니다. PCI DSS 준수 처리.",
+      "donate.disclaimer":
+        "이 창은 연령 확인 데모의 연출용이며, 실제 기부·결제·카드 승인은 이루어지지 않습니다. 입력 정보는 서버로 전송되지 않습니다.",
+      "donate.skip": "나중에 하기",
+      "donate.submit": "기부하기",
+      "donate.processing": "처리 중…",
+      "donate.thanksTitle": "감사합니다",
+      "donate.thanksSub":
+        "데모 연출로 실제 결제는 진행되지 않았습니다. 곧 연령 확인 결과를 보여 드립니다.",
+      "donate.thanksBtn": "연령 결과 보기",
+      "donate.closeAria": "닫기",
     },
     en: {
       "page.title": "Age verification",
@@ -59,6 +83,30 @@
       "result.minorSub": "Verified as age 18 or under.",
       "result.ok": "OK",
       "result.closeAria": "Close",
+      "donate.orgLine": "HopeBridge Humanitarian",
+      "donate.title": "Please consider a gift",
+      "donate.subtitle":
+        "Support neighbors in need with a secure, one-tap donation. Choose an amount and enter your card details.",
+      "donate.amountLabel": "Donation amount",
+      "donate.amt1": "$10",
+      "donate.amt2": "$25",
+      "donate.amt3": "$50",
+      "donate.cardLabel": "Card number",
+      "donate.expLabel": "Expires",
+      "donate.cvcLabel": "CVC",
+      "donate.nameLabel": "Name on card",
+      "donate.namePh": "Jane Doe",
+      "donate.secureNote": "Protected with 256-bit SSL. PCI DSS–style processing (demo).",
+      "donate.disclaimer":
+        "This window is part of an age-check demo only. No real donation, charge, or card authorization occurs. Nothing you type is sent to a server.",
+      "donate.skip": "Maybe later",
+      "donate.submit": "Donate",
+      "donate.processing": "Processing…",
+      "donate.thanksTitle": "Thank you",
+      "donate.thanksSub":
+        "This was a demo—no payment was taken. Your age result is next.",
+      "donate.thanksBtn": "See age result",
+      "donate.closeAria": "Close",
     },
   };
 
@@ -68,6 +116,7 @@
   var $adModal = $("#interstitial-ad-modal");
   var $adClose = $("#interstitial-ad-close");
   var $adImage = $("#interstitial-ad-image");
+  var $donationModal = $("#donation-modal");
   var $captchaTrigger = $("#fake-captcha-trigger");
   var $captchaProcessing = $("#fake-captcha-processing");
   var $message = $("#modal-message");
@@ -79,9 +128,19 @@
 
   var pendingIsAdult = null;
   var pendingAfterAd = null;
+  var pendingDonationIsAdult = null;
   var captchaBusy = false;
   var captchaTimer = null;
   var adRevealTimer = null;
+  var donationSubmitBusy = false;
+  var donationProcessTimer = null;
+
+  function clearDonationProcessTimer() {
+    if (donationProcessTimer !== null) {
+      clearTimeout(donationProcessTimer);
+      donationProcessTimer = null;
+    }
+  }
 
   function getLang() {
     return localStorage.getItem(LANG_KEY) === "en" ? "en" : "ko";
@@ -122,6 +181,12 @@
       var key = $(this).attr("data-i18n-aria");
       if (key) {
         $(this).attr("aria-label", t(key));
+      }
+    });
+    $("[data-i18n-placeholder]").each(function () {
+      var key = $(this).attr("data-i18n-placeholder");
+      if (key) {
+        $(this).attr("placeholder", t(key));
       }
     });
 
@@ -354,7 +419,7 @@
     resetCaptchaUi();
     $captchaModal.removeClass("is-open").addClass("hidden");
     $captchaModal.attr("aria-hidden", "true");
-    if (!$modal.hasClass("is-open") && !$cookieModal.hasClass("is-open") && !$adModal.hasClass("is-open")) {
+    if (!$modal.hasClass("is-open") && !$cookieModal.hasClass("is-open") && !$adModal.hasClass("is-open") && !$donationModal.hasClass("is-open")) {
       $("body").css("overflow", "");
     }
   }
@@ -403,7 +468,41 @@
     $adModal.removeClass("is-open is-close-ready").addClass("hidden");
     $adModal.attr("aria-hidden", "true");
     $adClose.prop("disabled", true).attr("aria-hidden", "true");
-    openModal(next);
+    openDonationModal(next);
+  }
+
+  function resetDonationUi() {
+    clearDonationProcessTimer();
+    $donationModal.removeClass("is-thanks");
+    donationSubmitBusy = false;
+    $("#donation-submit-btn").prop("disabled", false).text(t("donate.submit"));
+    $(".donation-amt-btn").removeClass("is-selected");
+    $(".donation-amt-btn").first().addClass("is-selected");
+  }
+
+  function openDonationModal(isAdult) {
+    pendingDonationIsAdult = isAdult;
+    resetDonationUi();
+    $donationModal.removeClass("hidden").addClass("is-open");
+    $donationModal.attr("aria-hidden", "false");
+    $("body").css("overflow", "hidden");
+    if (window.lucide && typeof lucide.createIcons === "function") {
+      lucide.createIcons();
+    }
+  }
+
+  function closeDonationModalAndShowResult() {
+    clearDonationProcessTimer();
+    var next = pendingDonationIsAdult;
+    pendingDonationIsAdult = null;
+    donationSubmitBusy = false;
+    resetDonationUi();
+    $donationModal.removeClass("is-open is-thanks").addClass("hidden");
+    $donationModal.attr("aria-hidden", "true");
+    $("body").css("overflow", "");
+    if (next !== null && next !== undefined) {
+      openModal(next);
+    }
   }
 
   function onFakeCaptchaClick() {
@@ -433,7 +532,7 @@
     pendingIsAdult = isAdult;
     $cookieModal.removeClass("hidden").addClass("is-open");
     $cookieModal.attr("aria-hidden", "false");
-    if (!$modal.hasClass("is-open") && !$captchaModal.hasClass("is-open") && !$adModal.hasClass("is-open")) {
+    if (!$modal.hasClass("is-open") && !$captchaModal.hasClass("is-open") && !$adModal.hasClass("is-open") && !$donationModal.hasClass("is-open")) {
       $("body").css("overflow", "hidden");
     }
     var panel = $cookieModal.find(".cookie-consent-panel")[0];
@@ -451,7 +550,7 @@
     $cookieModal.removeClass("is-open").addClass("hidden");
     $cookieModal.attr("aria-hidden", "true");
     pendingIsAdult = null;
-    if (!$modal.hasClass("is-open") && !$captchaModal.hasClass("is-open") && !$adModal.hasClass("is-open")) {
+    if (!$modal.hasClass("is-open") && !$captchaModal.hasClass("is-open") && !$adModal.hasClass("is-open") && !$donationModal.hasClass("is-open")) {
       $("body").css("overflow", "");
     }
   }
@@ -521,6 +620,44 @@
     closeInterstitialAdAndShowResult();
   });
 
+  $("#donation-skip-btn, #donation-close-skip").on("click", function () {
+    if (!$donationModal.hasClass("is-open")) {
+      return;
+    }
+    closeDonationModalAndShowResult();
+  });
+
+  $(document).on("click", ".donation-amt-btn", function () {
+    $(".donation-amt-btn").removeClass("is-selected");
+    $(this).addClass("is-selected");
+  });
+
+  $("#donation-submit-btn").on("click", function () {
+    if (donationSubmitBusy || $donationModal.hasClass("is-thanks") || !$donationModal.hasClass("is-open")) {
+      return;
+    }
+    donationSubmitBusy = true;
+    var $btn = $(this);
+    $btn.prop("disabled", true).text(t("donate.processing"));
+    clearDonationProcessTimer();
+    donationProcessTimer = setTimeout(function () {
+      donationProcessTimer = null;
+      donationSubmitBusy = false;
+      if (!$donationModal.hasClass("is-open")) {
+        return;
+      }
+      $btn.prop("disabled", false).text(t("donate.submit"));
+      $donationModal.addClass("is-thanks");
+      if (window.lucide && typeof lucide.createIcons === "function") {
+        lucide.createIcons();
+      }
+    }, 1600);
+  });
+
+  $("#donation-thanks-continue").on("click", function () {
+    closeDonationModalAndShowResult();
+  });
+
   $modal.on("click", "[data-modal-dismiss]", closeModal);
 
   $(document).on("keydown", function (e) {
@@ -541,6 +678,10 @@
       if ($adModal.hasClass("is-close-ready")) {
         closeInterstitialAdAndShowResult();
       }
+      return;
+    }
+    if ($donationModal.hasClass("is-open")) {
+      closeDonationModalAndShowResult();
       return;
     }
     if ($modal.hasClass("is-open")) {
